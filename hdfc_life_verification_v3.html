@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life — Customer Verification Journey v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --hdfc-red: #c8102e; --hdfc-navy: #0a1f44;
+    --green: #16a34a; --green-light: #dcfce7; --amber: #d97706;
+    --red-light: #fee2e2; --gray-50: #f8fafc; --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0; --gray-300: #cbd5e1; --gray-400: #94a3b8;
+    --gray-600: #475569; --gray-700: #334155; --gray-900: #0f172a;
+    --radius: 12px; --shadow-lg: 0 8px 40px rgba(0,0,0,0.14);
+  }
+  body { font-family: 'DM Sans', sans-serif; background: #eef2f7; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 16px; }
+
+  /* Admin Bar */
+  .admin-bar { width: 100%; max-width: 480px; background: var(--hdfc-navy); border-radius: 10px; padding: 10px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .admin-label { color: #94a3b8; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; flex-shrink: 0; }
+  .admin-btn { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 6px; border: none; cursor: pointer; transition: opacity 0.15s; }
+  .admin-btn:hover { opacity: 0.85; }
+  .admin-btn.green { background: #16a34a; color: #fff; }
+  .admin-btn.red { background: #dc2626; color: #fff; }
+  .admin-btn.purple { background: #7c3aed; color: #fff; }
+  .admin-btn.slate { background: #475569; color: #fff; }
+
+  /* Phone Shell */
+  .phone { width: 100%; max-width: 480px; background: #fff; border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-lg); min-height: 700px; display: flex; flex-direction: column; }
+  .app-header { background: var(--hdfc-red); padding: 20px 20px 16px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .header-logo { width: 36px; height: 36px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'DM Serif Display', serif; font-size: 14px; color: var(--hdfc-red); font-weight: 700; flex-shrink: 0; }
+  .header-title { color: #fff; font-size: 14px; font-weight: 600; line-height: 1.3; }
+  .header-sub { color: rgba(255,255,255,0.7); font-size: 11px; margin-top: 2px; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+  .tag-ai { background: #ede9fe; color: #7c3aed; }
+
+  /* Progress */
+  .progress-wrap { background: var(--gray-100); padding: 12px 20px; border-bottom: 1px solid var(--gray-200); flex-shrink: 0; }
+  .progress-steps { display: flex; align-items: center; justify-content: space-between; }
+  .step-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; border: 2px solid var(--gray-300); background: #fff; color: var(--gray-400); z-index: 1; transition: all 0.3s; }
+  .step-dot.active { border-color: var(--hdfc-red); background: var(--hdfc-red); color: #fff; }
+  .step-dot.done { border-color: var(--green); background: var(--green); color: #fff; }
+  .step-line { flex: 1; height: 2px; background: var(--gray-200); transition: background 0.3s; }
+  .step-line.done { background: var(--green); }
+  .progress-label { font-size: 11px; color: var(--gray-600); margin-top: 6px; font-weight: 500; }
+
+  /* Pages */
+  .page-content { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .page { display: none; flex-direction: column; gap: 16px; }
+  .page.active { display: flex; }
+
+  /* Cards */
+  .card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 16px; }
+  .card-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--hdfc-red); margin-bottom: 12px; }
+
+  /* Permissions */
+  .perm-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--gray-200); }
+  .perm-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .perm-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .perm-info { flex: 1; }
+  .perm-name { font-size: 14px; font-weight: 500; color: var(--gray-900); }
+  .perm-desc { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+  .perm-status { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; transition: all 0.3s; }
+  .perm-status.pending { background: var(--gray-100); border: 2px solid var(--gray-300); }
+  .perm-status.granted { background: var(--green-light); color: var(--green); }
+  .perm-status.denied { background: var(--red-light); color: #dc2626; }
+
+  /* Instruction box */
+  .instruction-box { background: #fff; border: 1px solid var(--gray-200); border-left: 4px solid var(--hdfc-red); border-radius: 0 var(--radius) var(--radius) 0; padding: 14px 16px; font-size: 14px; color: var(--gray-700); line-height: 1.7; }
+
+  /* Fields */
+  .field-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+  .field-label { font-size: 12px; font-weight: 500; color: var(--gray-600); }
+  .field-value { font-size: 14px; font-weight: 500; color: var(--gray-900); padding: 10px 14px; background: #fff; border: 1px solid var(--gray-200); border-radius: 8px; }
+
+  /* Product rows */
+  .product-row { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+  .product-row:last-child { border-bottom: none; }
+  .product-key { font-size: 13px; color: var(--gray-600); }
+  .product-val { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+
+  /* Disclaimers */
+  .disclaimer-item { display: flex; gap: 12px; padding: 14px; background: #fff; border: 1px solid var(--amber); border-radius: 10px; margin-bottom: 10px; }
+  .disclaimer-num { width: 22px; height: 22px; border-radius: 50%; background: var(--amber); color: #fff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .disclaimer-text { font-size: 13px; color: var(--gray-700); line-height: 1.6; }
+
+  /* Info note */
+  .info-note { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px 14px; font-size: 12px; color: #0369a1; display: flex; gap: 8px; align-items: flex-start; line-height: 1.6; }
+
+  /* Selfie & Liveness (page 5 only) */
+  .selfie-area { background: var(--gray-900); border-radius: var(--radius); aspect-ratio: 3/4; max-height: 240px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+  .selfie-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+  .face-guide { width: 120px; height: 150px; border: 3px dashed rgba(255,255,255,0.4); border-radius: 50% 50% 50% 50% / 55% 55% 45% 45%; display: flex; align-items: center; justify-content: center; transition: border-color 0.4s; }
+  .face-guide.captured { border-color: #22c55e; border-style: solid; }
+  .selfie-msg { color: #fff; font-size: 13px; font-weight: 500; text-align: center; background: rgba(0,0,0,0.55); padding: 6px 14px; border-radius: 20px; }
+  .blink-progress { display: flex; gap: 8px; }
+  .blink-dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.3); border: 2px solid rgba(255,255,255,0.5); transition: all 0.3s; }
+  .blink-dot.done { background: #22c55e; border-color: #22c55e; }
+  .selfie-captured-thumb { width: 48px; height: 56px; border-radius: 8px; background: linear-gradient(135deg, #334155, #1e293b); border: 2px solid #22c55e; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; position: relative; }
+  .selfie-captured-thumb::after { content: '✓'; position: absolute; bottom: -4px; right: -4px; width: 16px; height: 16px; background: #22c55e; border-radius: 50%; font-size: 9px; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  .liveness-success { background: rgba(22,163,74,0.1); border: 1px solid #16a34a; border-radius: 10px; padding: 12px 16px; display: none; align-items: center; gap: 10px; color: var(--green); font-size: 14px; font-weight: 500; margin-top: 10px; }
+  .liveness-success.show { display: flex; }
+  .liveness-fail { background: var(--red-light); border: 1px solid #dc2626; border-radius: 10px; padding: 12px 16px; display: none; align-items: center; gap: 10px; color: #dc2626; font-size: 14px; font-weight: 500; margin-top: 10px; }
+  .liveness-fail.show { display: flex; }
+
+  /* Consent Checkbox */
+  .consent-check-card {
+    background: #fffbeb;
+    border: 1.5px solid var(--amber);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .consent-check-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+  }
+  .consent-checkbox {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 2px solid var(--gray-400);
+    background: #fff;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .consent-checkbox.checked {
+    background: var(--green);
+    border-color: var(--green);
+    color: #fff;
+    font-size: 13px;
+  }
+  .consent-check-text {
+    font-size: 14px;
+    color: var(--gray-700);
+    line-height: 1.6;
+    font-weight: 500;
+  }
+  .consent-check-text strong { color: var(--gray-900); }
+
+  /* Restart button on page 5 */
+  .btn-restart-journey {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 13px 20px;
+    border-radius: 10px;
+    border: 1.5px solid var(--gray-300);
+    background: #fff;
+    color: var(--gray-700);
+    cursor: pointer;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+  .btn-restart-journey:hover { background: var(--gray-100); border-color: var(--gray-400); }
+
+  /* Consent Summary */
+  .consent-summary-card { background: var(--green-light); border: 1px solid #86efac; border-radius: var(--radius); padding: 16px; }
+  .consent-summary-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--green); margin-bottom: 10px; }
+  .consent-summary-body { font-size: 13px; color: #166534; line-height: 1.9; }
+
+  /* Mismatch restart CTA */
+  .restart-cta { background: #fff7ed; border: 1px solid #fed7aa; border-radius: var(--radius); padding: 16px; display: none; flex-direction: column; gap: 12px; }
+  .restart-cta.show { display: flex; }
+  .restart-cta-title { font-size: 14px; font-weight: 600; color: #92400e; }
+  .restart-cta-body { font-size: 13px; color: #b45309; line-height: 1.6; }
+  .btn-restart-red { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; padding: 12px 20px; border-radius: 10px; border: none; cursor: pointer; background: var(--hdfc-red); color: #fff; width: 100%; transition: background 0.2s; }
+  .btn-restart-red:hover { background: #a00d25; }
+
+  /* Action bar */
+  .action-bar { display: flex; gap: 10px; padding: 16px 20px; background: #fff; border-top: 1px solid var(--gray-200); flex-shrink: 0; }
+  .btn { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; padding: 13px 20px; border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s; }
+  .btn-agree { flex: 2; background: var(--hdfc-red); color: #fff; }
+  .btn-agree:hover:not(:disabled) { background: #a00d25; }
+  .btn-agree:disabled { background: var(--gray-300); cursor: not-allowed; }
+  .btn-disagree { flex: 1; background: #fff; color: var(--gray-700); border: 1.5px solid var(--gray-300); }
+  .btn-disagree:hover { border-color: var(--gray-500); }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal-sheet { background: #fff; border-radius: 20px 20px 0 0; padding: 24px 20px 32px; width: 100%; max-width: 480px; animation: slideUp 0.25s ease; }
+  @keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-handle { width: 40px; height: 4px; background: var(--gray-200); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-title { font-size: 16px; font-weight: 600; color: var(--gray-900); margin-bottom: 6px; }
+  .modal-sub { font-size: 13px; color: var(--gray-400); margin-bottom: 18px; }
+  .select-field { width: 100%; padding: 12px 14px; border: 1.5px solid var(--gray-300); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--gray-900); background: #fff; margin-bottom: 12px; outline: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .btn-cancel { flex: 1; padding: 13px; background: var(--gray-100); color: var(--gray-700); border-radius: 10px; border: none; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-submit-disagree { flex: 2; padding: 13px; background: #dc2626; color: #fff; border-radius: 10px; border: none; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
+
+  /* Journey end screens */
+  .journey-end { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; text-align: center; gap: 16px; padding: 40px 20px; }
+  .end-icon { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 36px; }
+  .end-icon.success { background: var(--green-light); }
+  .end-icon.fail { background: var(--red-light); }
+  .end-title { font-size: 20px; font-weight: 600; color: var(--gray-900); }
+  .end-sub { font-size: 14px; color: var(--gray-400); line-height: 1.6; }
+  .ref-box { background: var(--gray-100); border-radius: 10px; padding: 12px 20px; font-size: 13px; color: var(--gray-600); }
+  .ref-num { font-size: 18px; font-weight: 700; color: var(--hdfc-navy); letter-spacing: 0.05em; }
+
+  /* Scanning spinner */
+  .scanning-state { display: none; flex-direction: column; align-items: center; gap: 8px; padding: 12px; }
+  .scanning-state.show { display: flex; }
+  .scan-spinner { width: 32px; height: 32px; border: 3px solid var(--gray-200); border-top-color: var(--hdfc-red); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .scan-label { font-size: 13px; color: var(--gray-600); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<!-- Admin Bar -->
+<div class="admin-bar">
+  <span class="admin-label">🛠 Admin Simulate</span>
+  <button class="admin-btn purple" onclick="simPermissions(true)">✓ Grant Perms</button>
+  <button class="admin-btn red" onclick="simPermissions(false)">✗ Deny Perms</button>
+  <button class="admin-btn green" onclick="simLiveness(true)">✓ Liveness Pass</button>
+  <button class="admin-btn red" onclick="simLiveness(false)">✗ Liveness Fail</button>
+  <button class="admin-btn slate" onclick="resetJourney()">↺ Reset</button>
+</div>
+
+<!-- Phone -->
+<div class="phone">
+
+  <div class="app-header">
+    <div class="header-logo">H</div>
+    <div>
+      <div class="header-title">HDFC Life Verification</div>
+      <div class="header-sub">Secure Customer Onboarding</div>
+    </div>
+    <div style="margin-left:auto;"><span class="tag tag-ai">AI Powered</span></div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-steps">
+      <div class="step-dot active" id="s1">1</div><div class="step-line" id="l1"></div>
+      <div class="step-dot" id="s2">2</div><div class="step-line" id="l2"></div>
+      <div class="step-dot" id="s3">3</div><div class="step-line" id="l3"></div>
+      <div class="step-dot" id="s4">4</div><div class="step-line" id="l4"></div>
+      <div class="step-dot" id="s5">5</div>
+    </div>
+    <div class="progress-label" id="progressLabel">Step 1 of 5 — Instructions & Permissions</div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- ═══ PAGE 1 — Instructions & Permissions ═══ -->
+    <div class="page active" id="page1">
+      <div class="card">
+        <div class="card-title">System Permissions Required</div>
+        <div class="perm-row">
+          <div class="perm-icon" style="background:#fef3c7;">📷</div>
+          <div class="perm-info">
+            <div class="perm-name">Camera Access</div>
+            <div class="perm-desc">Required for liveness check on final step</div>
+          </div>
+          <div class="perm-status pending" id="camPerm">—</div>
+        </div>
+        <div class="perm-row">
+          <div class="perm-icon" style="background:#e0f2fe;">📍</div>
+          <div class="perm-info">
+            <div class="perm-name">Location Access</div>
+            <div class="perm-desc">Required to verify your presence</div>
+          </div>
+          <div class="perm-status pending" id="locPerm">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Instructions</div>
+        <div class="instruction-box">
+          1. Kindly go through the key policy details on each page and provide your consent by clicking the <strong>Agree</strong> button at the bottom.<br><br>
+          2. If you disagree with any detail, click <strong>Disagree</strong> and select a reason from the dropdown.<br><br>
+          3. On the final page, please confirm your agreement and complete a liveness check to finish the verification.
+        </div>
+      </div>
+
+      <div class="info-note">
+        <span>🔒</span>
+        <span>Your data is encrypted and processed securely in accordance with IRDAI guidelines and HDFC Life's privacy policy.</span>
+      </div>
+    </div>
+
+    <!-- ═══ PAGE 2 — Customer Details ═══ -->
+    <div class="page" id="page2">
+      <div class="card">
+        <div class="card-title">Personal Information</div>
+        <div class="field-group"><div class="field-label">Full Name</div><div class="field-value">Rajesh Kumar Sharma</div></div>
+        <div class="field-group"><div class="field-label">Date of Birth</div><div class="field-value">12 Mar 1984</div></div>
+        <div class="field-group"><div class="field-label">Address</div><div class="field-value">B-204, Sunshine Towers, Andheri West, Mumbai – 400 053</div></div>
+        <div class="field-group"><div class="field-label">Email ID</div><div class="field-value">rajesh.sharma@email.com</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Professional & Financial Profile</div>
+        <div class="field-group"><div class="field-label">Occupation</div><div class="field-value">Salaried — Private Sector</div></div>
+        <div class="field-group"><div class="field-label">Annual Income</div><div class="field-value">₹ 18,00,000</div></div>
+      </div>
+    </div>
+
+    <!-- ═══ PAGE 3 — Product Details ═══ -->
+    <div class="page" id="page3">
+      <div class="card">
+        <div class="card-title">Product Information</div>
+        <div class="product-row"><span class="product-key">Product Name</span><span class="product-val">HDFC Life Sanchay Plus</span></div>
+        <div class="product-row"><span class="product-key">Premium Amount</span><span class="product-val">₹ 24,000 / year</span></div>
+        <div class="product-row"><span class="product-key">Payment Frequency</span><span class="product-val">Annual</span></div>
+        <div class="product-row"><span class="product-key">Policy Term</span><span class="product-val">20 Years</span></div>
+        <div class="product-row"><span class="product-key">Life Cover</span><span class="product-val">₹ 50,00,000</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Benefits</div>
+        <div class="product-row"><span class="product-key">Maturity Benefit</span><span class="product-val">₹ 7,20,000</span></div>
+        <div class="product-row"><span class="product-key">Income Benefit</span><span class="product-val">₹ 30,000 / month (Yr 11–20)</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Add-Ons / Riders</div>
+        <div class="product-row"><span class="product-key">Critical Illness Rider</span><span class="product-val" style="color:var(--green);">Included</span></div>
+        <div class="product-row"><span class="product-key">Accidental Death Benefit</span><span class="product-val" style="color:var(--green);">Included</span></div>
+        <div class="product-row"><span class="product-key">Waiver of Premium</span><span class="product-val" style="color:var(--gray-400);">Not opted</span></div>
+      </div>
+    </div>
+
+    <!-- ═══ PAGE 4 — Disclaimers ═══ -->
+    <div class="page" id="page4">
+      <div class="info-note"><span>⚠️</span><span>Please read all disclaimers carefully before providing your consent.</span></div>
+      <div>
+        <div class="disclaimer-item"><div class="disclaimer-num">1</div><div class="disclaimer-text">Please note that missing premium payment timeline will impact the policy coverage.</div></div>
+        <div class="disclaimer-item"><div class="disclaimer-num">2</div><div class="disclaimer-text">Policy benefit will be impacted if the policy is discontinued before the completion of the policy term.</div></div>
+        <div class="disclaimer-item"><div class="disclaimer-num">3</div><div class="disclaimer-text">Please consult your tax advisor for tax benefits of the product.</div></div>
+      </div>
+    </div>
+
+    <!-- ═══ PAGE 5 — Final Verification ═══ -->
+    <div class="page" id="page5">
+
+      <!-- Consent Summary -->
+      <div class="consent-summary-card">
+        <div class="consent-summary-title">Your Consent Summary</div>
+        <div class="consent-summary-body">
+          ✅ Customer Details — <strong>Agreed</strong><br>
+          ✅ Product Details — <strong>Agreed</strong><br>
+          ✅ Disclaimers — <strong>Agreed</strong>
+        </div>
+      </div>
+
+      <!-- Liveness Check -->
+      <div class="card">
+        <div class="card-title">Identity Liveness Check</div>
+        <div class="info-note" style="margin-bottom:12px;">
+          <span>🎥</span>
+          <span>Position your face within the frame and blink <strong>3 times</strong> naturally to confirm your presence.</span>
+        </div>
+        <div class="selfie-area">
+          <div class="selfie-overlay">
+            <div class="face-guide" id="faceGuide"><span style="font-size:38px;">👤</span></div>
+            <div class="selfie-msg" id="selfieMsg">Ready — blink 3 times when ready</div>
+            <div class="blink-progress">
+              <div class="blink-dot" id="b_1"></div>
+              <div class="blink-dot" id="b_2"></div>
+              <div class="blink-dot" id="b_3"></div>
+            </div>
+          </div>
+        </div>
+        <div class="liveness-success" id="livenessSuccess">
+          <div class="selfie-captured-thumb">🧑</div>
+          <div>
+            <div style="font-weight:600;">Liveness Confirmed</div>
+            <div style="font-size:12px;margin-top:2px;">Your presence has been verified successfully</div>
+          </div>
+        </div>
+        <div class="liveness-fail" id="livenessFail">⚠️ Liveness check failed. Please try again.</div>
+      </div>
+
+      <!-- Consent Checkbox -->
+      <div class="consent-check-card" id="consentCheckCard">
+        <div class="consent-check-label" onclick="toggleConsent()">
+          <div class="consent-checkbox" id="consentBox">
+            <span id="consentTick" style="display:none;">✓</span>
+          </div>
+          <div class="consent-check-text">
+            I hereby confirm my agreement on the details shown in the previous pages.
+          </div>
+        </div>
+      </div>
+
+      <!-- Restart Journey Button -->
+      <button class="btn-restart-journey" onclick="restartFromPage1()">
+        ↩ Restart the Verification
+      </button>
+
+    </div>
+
+    <!-- ═══ SUCCESS ═══ -->
+    <div class="page" id="pageSuccess">
+      <div class="journey-end">
+        <div class="end-icon success">✅</div>
+        <div class="end-title">Verification Complete!</div>
+        <div class="end-sub">Your identity and consent have been verified and recorded. Our team will reach out within 24 hours.</div>
+        <div class="ref-box">
+          <div style="font-size:12px;color:var(--gray-400);margin-bottom:4px;">Reference Number</div>
+          <div class="ref-num">HDL-2024-VRF-091847</div>
+        </div>
+        <div style="font-size:12px;color:var(--gray-400);margin-top:8px;">Confirmation sent to rajesh.sharma@email.com</div>
+      </div>
+    </div>
+
+    <!-- ═══ DISAGREE END ═══ -->
+    <div class="page" id="pageEnd">
+      <div class="journey-end">
+        <div class="end-icon fail">❌</div>
+        <div class="end-title">Journey Ended</div>
+        <div class="end-sub" id="endMsg">Your disagreement has been recorded. An HDFC Life advisor will contact you shortly.</div>
+        <div class="ref-box">
+          <div style="font-size:12px;color:var(--gray-400);margin-bottom:4px;">Ticket Number</div>
+          <div class="ref-num">HDL-2024-DIS-047231</div>
+        </div>
+        <div style="margin-top:16px;font-size:13px;color:var(--gray-400);">Need help? Call <strong style="color:var(--hdfc-red);">1800-266-9777</strong></div>
+      </div>
+    </div>
+
+  </div><!-- end page-content -->
+
+  <!-- Action Bar -->
+  <div class="action-bar" id="actionBar">
+    <button class="btn btn-agree" id="agreeBtn" onclick="handleAgree()">✓ Agree & Continue</button>
+    <button class="btn btn-disagree" id="disagreeBtn" onclick="openDisagree()" style="display:none;">✗ Disagree</button>
+  </div>
+
+</div><!-- end phone -->
+
+<!-- Disagree Modal -->
+<div class="modal-overlay" id="disagreeModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Reason for Disagreement</div>
+    <div class="modal-sub">Please select a reason so we can assist you better.</div>
+    <select class="select-field" id="disagreeCategory">
+      <option value="">— Select category —</option>
+      <option>Personal / Contact Details</option>
+      <option>Product / Premium Details</option>
+      <option>Policy Terms & Benefits</option>
+      <option>Disclaimer / Terms</option>
+      <option>Other</option>
+    </select>
+    <select class="select-field" id="disagreeReason">
+      <option value="">— Select specific reason —</option>
+      <option>Details are incorrect / don't match</option>
+      <option>I was not informed about this</option>
+      <option>I do not agree with the terms</option>
+      <option>I need more clarification</option>
+      <option>Premium amount differs from what was communicated</option>
+      <option>I want to modify / change details</option>
+      <option>I want to cancel the policy</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeDisagree()">Cancel</button>
+      <button class="btn-submit-disagree" onclick="submitDisagree()">Submit & End Journey</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentPage = 1;
+  let livenessPass = null;
+  let consentChecked = false;
+  let permsGranted = false;
+
+  const stepLabels = [
+    '',
+    'Step 1 of 5 — Instructions & Permissions',
+    'Step 2 of 5 — Customer Details',
+    'Step 3 of 5 — Product Details',
+    'Step 4 of 5 — Disclaimers',
+    'Step 5 of 5 — Final Verification'
+  ];
+
+  function showPage(n) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page' + n).classList.add('active');
+    currentPage = n;
+    updateProgress(n);
+    updateActionBar(n);
+  }
+
+  function updateProgress(n) {
+    for (let i = 1; i <= 5; i++) {
+      const dot = document.getElementById('s' + i);
+      if (i < n) { dot.className = 'step-dot done'; dot.textContent = '✓'; }
+      else if (i === n) { dot.className = 'step-dot active'; dot.textContent = i; }
+      else { dot.className = 'step-dot'; dot.textContent = i; }
+      if (i < 5) document.getElementById('l' + i).className = 'step-line' + (i < n ? ' done' : '');
+    }
+    document.getElementById('progressLabel').textContent = stepLabels[n] || '';
+  }
+
+  function updateActionBar(n) {
+    const bar = document.getElementById('actionBar');
+    const agree = document.getElementById('agreeBtn');
+    const dis = document.getElementById('disagreeBtn');
+
+    if (n === 1) {
+      bar.style.display = 'flex';
+      dis.style.display = 'none';
+      agree.textContent = '✓ Proceed';
+      agree.disabled = !permsGranted;
+    } else if (n === 5) {
+      bar.style.display = 'flex';
+      dis.style.display = 'none';
+      agree.textContent = '✓ Complete Verification';
+      agree.disabled = !(livenessPass === true && consentChecked);
+    } else if (n >= 6) {
+      bar.style.display = 'none';
+    } else {
+      bar.style.display = 'flex';
+      dis.style.display = 'flex';
+      agree.textContent = '✓ Agree & Continue';
+      agree.disabled = false;
+    }
+  }
+
+  function handleAgree() {
+    if (currentPage < 5) showPage(currentPage + 1);
+    else if (currentPage === 5) endSuccess();
+  }
+
+  function endSuccess() {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('pageSuccess').classList.add('active');
+    document.getElementById('actionBar').style.display = 'none';
+    document.getElementById('progressLabel').textContent = 'Verification Complete';
+    for (let i = 1; i <= 5; i++) {
+      const d = document.getElementById('s' + i); d.className = 'step-dot done'; d.textContent = '✓';
+      if (i < 5) document.getElementById('l' + i).className = 'step-line done';
+    }
+  }
+
+  function restartFromPage1() {
+    resetState();
+    showPage(1);
+  }
+
+  // Consent checkbox toggle
+  function toggleConsent() {
+    consentChecked = !consentChecked;
+    const box = document.getElementById('consentBox');
+    const tick = document.getElementById('consentTick');
+    if (consentChecked) {
+      box.classList.add('checked');
+      tick.style.display = 'block';
+    } else {
+      box.classList.remove('checked');
+      tick.style.display = 'none';
+    }
+    updateActionBar(5);
+  }
+
+  // Disagree modal
+  function openDisagree() { document.getElementById('disagreeModal').classList.add('open'); }
+  function closeDisagree() { document.getElementById('disagreeModal').classList.remove('open'); }
+
+  function submitDisagree() {
+    const cat = document.getElementById('disagreeCategory').value;
+    const reason = document.getElementById('disagreeReason').value;
+    if (!reason) { alert('Please select a reason to proceed.'); return; }
+    closeDisagree();
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('pageEnd').classList.add('active');
+    document.getElementById('actionBar').style.display = 'none';
+    document.getElementById('endMsg').textContent =
+      'Your concern about "' + (cat || 'policy details') + '" has been recorded. An HDFC Life advisor will contact you within 24 hours to assist.';
+  }
+
+  // Admin simulations
+  function simPermissions(grant) {
+    permsGranted = grant;
+    const cam = document.getElementById('camPerm');
+    const loc = document.getElementById('locPerm');
+    if (grant) {
+      cam.className = 'perm-status granted'; cam.textContent = '✓';
+      loc.className = 'perm-status granted'; loc.textContent = '✓';
+    } else {
+      cam.className = 'perm-status denied'; cam.textContent = '✗';
+      loc.className = 'perm-status denied'; loc.textContent = '✗';
+    }
+    if (currentPage === 1) updateActionBar(1);
+  }
+
+  function simLiveness(pass) {
+    if (currentPage !== 5) return;
+    livenessPass = pass;
+    runBlinkAnimation(pass);
+  }
+
+  function runBlinkAnimation(pass) {
+    const dots = [1, 2, 3].map(b => document.getElementById('b_' + b));
+    const msg = document.getElementById('selfieMsg');
+    const success = document.getElementById('livenessSuccess');
+    const fail = document.getElementById('livenessFail');
+    success.classList.remove('show'); fail.classList.remove('show');
+    dots.forEach(d => d.className = 'blink-dot');
+    msg.textContent = 'Detecting eye blinks...';
+    if (!pass) {
+      msg.textContent = 'Liveness check failed';
+      fail.classList.add('show');
+      updateActionBar(5);
+      return;
+    }
+    let count = 0;
+    const interval = setInterval(() => {
+      if (count >= 3) {
+        clearInterval(interval);
+        msg.textContent = '3 blinks detected ✓';
+        success.classList.add('show');
+        document.getElementById('faceGuide').classList.add('captured');
+        updateActionBar(5);
+        return;
+      }
+      dots[count].className = 'blink-dot done';
+      msg.textContent = 'Blink ' + (count + 1) + ' of 3 detected...';
+      count++;
+    }, 800);
+  }
+
+  function resetState() {
+    permsGranted = false;
+    livenessPass = null;
+    consentChecked = false;
+
+    // Reset permissions
+    ['camPerm', 'locPerm'].forEach(id => {
+      const el = document.getElementById(id);
+      el.className = 'perm-status pending'; el.textContent = '—';
+    });
+
+    // Reset liveness
+    const success = document.getElementById('livenessSuccess');
+    const fail = document.getElementById('livenessFail');
+    if (success) success.classList.remove('show');
+    if (fail) fail.classList.remove('show');
+    [1, 2, 3].forEach(b => {
+      const d = document.getElementById('b_' + b);
+      if (d) d.className = 'blink-dot';
+    });
+    const fg = document.getElementById('faceGuide');
+    if (fg) fg.classList.remove('captured');
+    const sm = document.getElementById('selfieMsg');
+    if (sm) sm.textContent = 'Ready — blink 3 times when ready';
+
+    // Reset consent checkbox
+    const box = document.getElementById('consentBox');
+    const tick = document.getElementById('consentTick');
+    if (box) box.classList.remove('checked');
+    if (tick) tick.style.display = 'none';
+
+    // Reset disagree dropdowns
+    document.getElementById('disagreeCategory').value = '';
+    document.getElementById('disagreeReason').value = '';
+
+    // Show action bar
+    document.getElementById('actionBar').style.display = 'flex';
+  }
+
+  function resetJourney() {
+    resetState();
+    showPage(1);
+  }
+
+  // Init
+  updateActionBar(1);
+</script>
+</body>
+</html>
