@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XXXX Life — Customer Verification Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   GLOBAL RESET & VARIABLES
+═══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --brand: #c8102e; --navy: #0a1f44;
+  --green: #16a34a; --green-light: #dcfce7;
+  --amber: #d97706; --amber-light: #fffbeb;
+  --red-light: #fee2e2; --purple: #7c3aed; --purple-light: #ede9fe;
+  --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1; --gray-400: #94a3b8; --gray-600: #475569;
+  --gray-700: #334155; --gray-900: #0f172a;
+  --radius: 12px; --shadow: 0 4px 20px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.14);
+}
+body { font-family: 'DM Sans', sans-serif; background: #eef2f7; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 16px; }
+
+/* ═══════════════════════════════════════════
+   SCREENS — only one visible at a time
+═══════════════════════════════════════════ */
+.screen { display: none; width: 100%; max-width: 480px; flex-direction: column; align-items: center; }
+.screen.active { display: flex; }
+
+/* ═══════════════════════════════════════════
+   ADMIN BAR
+═══════════════════════════════════════════ */
+.admin-bar { width: 100%; max-width: 480px; background: var(--navy); border-radius: 10px; padding: 10px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.admin-label { color: #94a3b8; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; flex-shrink: 0; }
+.adm { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 6px; border: none; cursor: pointer; }
+.adm.green { background: #16a34a; color: #fff; }
+.adm.red { background: #dc2626; color: #fff; }
+.adm.purple { background: #7c3aed; color: #fff; }
+.adm.slate { background: #475569; color: #fff; }
+.adm.amber { background: var(--amber); color: #fff; }
+
+/* ═══════════════════════════════════════════
+   PHONE SHELL
+═══════════════════════════════════════════ */
+.phone { width: 100%; background: #fff; border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-lg); min-height: 700px; display: flex; flex-direction: column; }
+
+/* ═══════════════════════════════════════════
+   APP HEADER
+═══════════════════════════════════════════ */
+.app-header { background: var(--brand); padding: 20px 20px 16px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.header-logo { width: 36px; height: 36px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'DM Serif Display', serif; font-size: 13px; color: var(--brand); font-weight: 700; flex-shrink: 0; }
+.header-title { color: #fff; font-size: 14px; font-weight: 600; line-height: 1.3; }
+.header-sub { color: rgba(255,255,255,0.7); font-size: 11px; margin-top: 2px; }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+.tag-ai { background: var(--purple-light); color: var(--purple); }
+
+/* ═══════════════════════════════════════════
+   PROGRESS BAR
+═══════════════════════════════════════════ */
+.progress-wrap { background: var(--gray-100); padding: 12px 20px; border-bottom: 1px solid var(--gray-200); flex-shrink: 0; }
+.progress-steps { display: flex; align-items: center; justify-content: space-between; }
+.step-dot { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; flex-shrink: 0; border: 2px solid var(--gray-300); background: #fff; color: var(--gray-400); transition: all 0.3s; }
+.step-dot.active { border-color: var(--brand); background: var(--brand); color: #fff; }
+.step-dot.done { border-color: var(--green); background: var(--green); color: #fff; }
+.step-line { flex: 1; height: 2px; background: var(--gray-200); transition: background 0.3s; }
+.step-line.done { background: var(--green); }
+.progress-label { font-size: 11px; color: var(--gray-600); margin-top: 6px; font-weight: 500; }
+
+/* ═══════════════════════════════════════════
+   PAGE CONTENT
+═══════════════════════════════════════════ */
+.page-content { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.jpage { display: none; flex-direction: column; gap: 16px; }
+.jpage.active { display: flex; }
+
+/* ═══════════════════════════════════════════
+   SHARED COMPONENT STYLES
+═══════════════════════════════════════════ */
+.card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 16px; }
+.card-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--brand); margin-bottom: 12px; }
+.instruction-box { background: #fff; border: 1px solid var(--gray-200); border-left: 4px solid var(--brand); border-radius: 0 var(--radius) var(--radius) 0; padding: 14px 16px; font-size: 14px; color: var(--gray-700); line-height: 1.75; }
+.field-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.field-label { font-size: 12px; font-weight: 500; color: var(--gray-600); }
+.field-value { font-size: 14px; font-weight: 500; color: var(--gray-900); padding: 10px 14px; background: #fff; border: 1px solid var(--gray-200); border-radius: 8px; }
+.product-row { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+.product-row:last-child { border-bottom: none; }
+.product-key { font-size: 13px; color: var(--gray-600); }
+.product-val { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+.disclaimer-item { display: flex; gap: 12px; padding: 14px; background: #fff; border: 1px solid var(--amber); border-radius: 10px; margin-bottom: 10px; }
+.disclaimer-num { width: 22px; height: 22px; border-radius: 50%; background: var(--amber); color: #fff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.disclaimer-text { font-size: 13px; color: var(--gray-700); line-height: 1.6; }
+.info-note { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px 14px; font-size: 12px; color: #0369a1; display: flex; gap: 8px; align-items: flex-start; line-height: 1.6; }
+.warn-note { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 12px 14px; font-size: 12px; color: #92400e; display: flex; gap: 8px; align-items: flex-start; line-height: 1.6; }
+.perm-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--gray-200); }
+.perm-row:last-child { border-bottom: none; padding-bottom: 0; }
+.perm-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.perm-info { flex: 1; }
+.perm-name { font-size: 14px; font-weight: 500; color: var(--gray-900); }
+.perm-desc { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+.perm-status { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; transition: all 0.3s; }
+.perm-status.pending { background: var(--gray-100); border: 2px solid var(--gray-300); }
+.perm-status.granted { background: var(--green-light); color: var(--green); }
+.perm-status.denied { background: var(--red-light); color: #dc2626; }
+
+/* Selfie / Liveness */
+.selfie-area { background: var(--gray-900); border-radius: var(--radius); aspect-ratio: 3/4; max-height: 240px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.selfie-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.face-guide { width: 120px; height: 150px; border: 3px dashed rgba(255,255,255,0.4); border-radius: 50% 50% 50% 50% / 55% 55% 45% 45%; display: flex; align-items: center; justify-content: center; transition: border-color 0.4s; }
+.face-guide.captured { border-color: #22c55e; border-style: solid; }
+.selfie-msg { color: #fff; font-size: 13px; font-weight: 500; text-align: center; background: rgba(0,0,0,0.55); padding: 6px 14px; border-radius: 20px; }
+.blink-progress { display: flex; gap: 8px; }
+.blink-dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.3); border: 2px solid rgba(255,255,255,0.5); transition: all 0.3s; }
+.blink-dot.done { background: #22c55e; border-color: #22c55e; }
+.selfie-captured-thumb { width: 48px; height: 56px; border-radius: 8px; background: linear-gradient(135deg,#334155,#1e293b); border: 2px solid #22c55e; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; position: relative; }
+.selfie-captured-thumb::after { content:'✓'; position: absolute; bottom:-4px; right:-4px; width:16px; height:16px; background:#22c55e; border-radius:50%; font-size:9px; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; }
+.liveness-result { border-radius: 10px; padding: 12px 16px; display: none; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; margin-top: 10px; }
+.liveness-result.show { display: flex; }
+.liveness-result.pass { background: rgba(22,163,74,0.1); border: 1px solid #16a34a; color: var(--green); }
+.liveness-result.fail { background: var(--red-light); border: 1px solid #dc2626; color: #dc2626; }
+
+/* Consent checkbox */
+.consent-check-card { background: var(--amber-light); border: 1.5px solid var(--amber); border-radius: var(--radius); padding: 16px; }
+.consent-check-label { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
+.consent-checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--gray-400); background: #fff; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; cursor: pointer; }
+.consent-checkbox.checked { background: var(--green); border-color: var(--green); color: #fff; font-size: 13px; }
+.consent-check-text { font-size: 14px; color: var(--gray-700); line-height: 1.6; font-weight: 500; }
+
+/* Summary card */
+.summary-card { background: var(--green-light); border: 1px solid #86efac; border-radius: var(--radius); padding: 16px; }
+.summary-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--green); margin-bottom: 10px; }
+.summary-body { font-size: 13px; color: #166534; line-height: 1.9; }
+
+/* Journey end */
+.journey-end { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; text-align: center; gap: 16px; padding: 40px 20px; }
+.end-icon { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 36px; }
+.end-icon.success { background: var(--green-light); }
+.end-icon.fail { background: var(--red-light); }
+.end-icon.pending { background: #fef3c7; }
+.end-title { font-size: 20px; font-weight: 600; color: var(--gray-900); }
+.end-sub { font-size: 14px; color: var(--gray-400); line-height: 1.6; }
+.ref-box { background: var(--gray-100); border-radius: 10px; padding: 12px 20px; text-align: center; }
+.ref-num { font-size: 18px; font-weight: 700; color: var(--navy); letter-spacing: 0.05em; }
+
+/* Action bar */
+.action-bar { display: flex; gap: 10px; padding: 16px 20px; background: #fff; border-top: 1px solid var(--gray-200); flex-shrink: 0; }
+.btn { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; padding: 13px 20px; border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s; }
+.btn-primary { flex: 2; background: var(--brand); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: #a00d25; }
+.btn-primary:disabled { background: var(--gray-300); cursor: not-allowed; }
+.btn-secondary { flex: 1; background: #fff; color: var(--gray-700); border: 1.5px solid var(--gray-300); }
+.btn-secondary:hover { border-color: var(--gray-500); }
+.btn-outline-full { font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; padding:13px 20px; border-radius:10px; border:1.5px solid var(--gray-300); background:#fff; color:var(--gray-700); cursor:pointer; width:100%; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.2s; }
+.btn-outline-full:hover { background:var(--gray-100); }
+
+/* Disagree modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal-sheet { background: #fff; border-radius: 20px 20px 0 0; padding: 24px 20px 32px; width: 100%; max-width: 480px; animation: slideUp 0.25s ease; }
+@keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-handle { width: 40px; height: 4px; background: var(--gray-200); border-radius: 2px; margin: 0 auto 20px; }
+.modal-title { font-size: 16px; font-weight: 600; color: var(--gray-900); margin-bottom: 6px; }
+.modal-sub { font-size: 13px; color: var(--gray-400); margin-bottom: 18px; }
+.select-field { width: 100%; padding: 12px 14px; border: 1.5px solid var(--gray-300); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--gray-900); background: #fff; margin-bottom: 12px; outline: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+.modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+.btn-modal-cancel { flex:1; padding:13px; background:var(--gray-100); color:var(--gray-700); border-radius:10px; border:none; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; }
+.btn-modal-submit { flex:2; padding:13px; background:#dc2626; color:#fff; border-radius:10px; border:none; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; }
+
+/* ═══════════════════════════════════════════
+   HOME SCREEN
+═══════════════════════════════════════════ */
+.home-hero { width:100%; background: linear-gradient(135deg, var(--navy) 0%, #1a3a6e 100%); border-radius: 20px; padding: 28px 24px; color: #fff; margin-bottom: 4px; }
+.home-hero-logo { width:44px; height:44px; background:#fff; border-radius:10px; display:flex; align-items:center; justify-content:center; font-family:'DM Serif Display',serif; font-size:16px; color:var(--brand); font-weight:700; margin-bottom:16px; }
+.home-hero-title { font-size:22px; font-weight:700; line-height:1.3; margin-bottom:8px; }
+.home-hero-sub { font-size:14px; color:rgba(255,255,255,0.7); line-height:1.6; }
+.home-section-label { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--gray-400); margin:16px 0 10px; width:100%; }
+.journey-card { width:100%; background:#fff; border-radius:16px; box-shadow:var(--shadow); padding:18px; display:flex; gap:14px; align-items:flex-start; cursor:pointer; border:2px solid transparent; margin-bottom:10px; transition:all 0.2s; }
+.journey-card:hover { border-color:var(--brand); transform:translateY(-1px); box-shadow:var(--shadow-lg); }
+.journey-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+.journey-info { flex:1; }
+.journey-mode { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--gray-400); margin-bottom:4px; }
+.journey-title { font-size:15px; font-weight:600; color:var(--gray-900); margin-bottom:4px; }
+.journey-desc { font-size:12px; color:var(--gray-600); line-height:1.5; }
+.journey-arrow { font-size:18px; color:var(--gray-300); flex-shrink:0; margin-top:10px; }
+
+/* ═══════════════════════════════════════════
+   LANGUAGE SELECTION
+═══════════════════════════════════════════ */
+.lang-card { width:100%; background:#fff; border-radius:20px; box-shadow:var(--shadow-lg); padding:28px 24px; display:flex; flex-direction:column; gap:16px; }
+.lang-title { font-size:18px; font-weight:700; color:var(--gray-900); }
+.lang-sub { font-size:14px; color:var(--gray-400); line-height:1.6; margin-top:-8px; }
+.lang-select-wrap { position:relative; }
+.lang-select { width:100%; padding:14px 16px; border:2px solid var(--gray-300); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:15px; color:var(--gray-900); background:#fff; outline:none; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; cursor:pointer; }
+.lang-select:focus { border-color:var(--brand); }
+.btn-lang-proceed { font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; padding:15px 20px; border-radius:12px; border:none; background:var(--brand); color:#fff; cursor:pointer; width:100%; transition:background 0.2s; }
+.btn-lang-proceed:hover:not(:disabled) { background:#a00d25; }
+.btn-lang-proceed:disabled { background:var(--gray-300); cursor:not-allowed; }
+.btn-home-back { font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; padding:10px 20px; border-radius:10px; border:1.5px solid var(--gray-300); background:#fff; color:var(--gray-600); cursor:pointer; width:100%; margin-top:4px; }
+
+/* ═══════════════════════════════════════════
+   JOURNEY 3 — VIDEO CONSENT
+═══════════════════════════════════════════ */
+.video-area { background:var(--gray-900); border-radius:var(--radius); aspect-ratio:4/3; max-height:260px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+.video-frame-border { position:absolute; inset:12px; border:2px solid rgba(255,255,255,0.25); border-radius:10px; pointer-events:none; }
+.video-rec-badge { position:absolute; top:12px; left:12px; background:rgba(220,38,38,0.9); color:#fff; font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px; display:none; align-items:center; gap:6px; }
+.video-rec-badge.show { display:flex; }
+.rec-dot { width:8px; height:8px; border-radius:50%; background:#fff; animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.video-face-icon { font-size:48px; }
+.video-status-msg { color:#fff; font-size:13px; font-weight:500; text-align:center; background:rgba(0,0,0,0.6); padding:6px 14px; border-radius:20px; position:absolute; bottom:14px; left:50%; transform:translateX(-50%); white-space:nowrap; }
+
+/* Teleprompter */
+.teleprompter-wrap { background:var(--navy); border-radius:var(--radius); padding:16px; overflow:hidden; height:280px; position:relative; transition:height 0.3s ease; }
+.teleprompter-wrap.scroll-mode .teleprompter-inner { overflow-y:auto; }
+.teleprompter-title { font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; }
+.teleprompter-inner { overflow:hidden; height:240px; position:relative; }
+.teleprompter-text { color:#e2e8f0; font-size:14px; line-height:1.8; transition:transform 0.5s ease; }
+.teleprompter-wrap.scroll-mode .teleprompter-text { transform:none !important; }
+.teleprompter-text .highlight { color:#fbbf24; font-weight:600; }
+.teleprompter-gradient { position:absolute; bottom:0; left:0; right:0; height:40px; background:linear-gradient(transparent, var(--navy)); pointer-events:none; }
+.teleprompter-wrap.scroll-mode .teleprompter-gradient { display:none; }
+/* Teleprompter control buttons */
+.tele-controls { display:flex; gap:8px; margin-top:12px; }
+.tele-btn { font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; padding:8px 14px; border-radius:8px; border:none; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.15s; flex:1; justify-content:center; }
+.tele-btn.replay { background:#1e3a5f; color:#93c5fd; border:1px solid rgba(37,99,235,0.3); }
+.tele-btn.replay:hover { background:#1e40af33; }
+.tele-btn.scroll-toggle { background:#1e3a5f; color:#a5f3fc; border:1px solid rgba(8,145,178,0.3); }
+.tele-btn.scroll-toggle.active { background:#0e7490; color:#fff; }
+
+/* Voice match result */
+.voice-match-card { border-radius:var(--radius); padding:14px 16px; display:none; flex-direction:column; gap:6px; }
+.voice-match-card.show { display:flex; }
+.voice-match-card.pass { background:var(--green-light); border:1px solid #86efac; }
+.voice-match-card.fail { background:#fff7ed; border:1px solid #fed7aa; }
+.voice-match-card.pending { background:#fef3c7; border:1px solid #fde68a; }
+.voice-match-title { font-size:14px; font-weight:600; }
+.voice-match-card.pass .voice-match-title { color:#166534; }
+.voice-match-card.fail .voice-match-title { color:#92400e; }
+.voice-match-card.pending .voice-match-title { color:#92400e; }
+.voice-match-sub { font-size:12px; line-height:1.6; }
+.voice-match-card.pass .voice-match-sub { color:#15803d; }
+.voice-match-card.fail .voice-match-sub { color:#b45309; }
+.voice-match-card.pending .voice-match-sub { color:#b45309; }
+
+/* ═══════════════════════════════════════════
+   JOURNEY 4 — AI AVATAR
+═══════════════════════════════════════════ */
+.avatar-area { background:linear-gradient(135deg, #0f172a, #1e293b); border-radius:var(--radius); padding:20px 16px; display:flex; flex-direction:column; align-items:center; gap:12px; }
+.avatar-circle { width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, #7c3aed, #4f46e5); display:flex; align-items:center; justify-content:center; font-size:36px; position:relative; }
+.avatar-speaking-ring { position:absolute; inset:-4px; border-radius:50%; border:3px solid rgba(124,58,237,0.5); animation:speakPulse 1.2s ease-in-out infinite; display:none; }
+.avatar-speaking-ring.show { display:block; }
+@keyframes speakPulse { 0%,100%{transform:scale(1);opacity:0.7} 50%{transform:scale(1.1);opacity:0.3} }
+.avatar-name { color:#e2e8f0; font-size:13px; font-weight:600; }
+.avatar-badge { background:rgba(124,58,237,0.3); color:#c4b5fd; font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; }
+.avatar-bubble { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:12px 14px; width:100%; font-size:13px; color:#e2e8f0; line-height:1.6; min-height:52px; }
+.avatar-bubble .typing-dots { display:inline-flex; gap:4px; align-items:center; }
+.typing-dot { width:6px; height:6px; border-radius:50%; background:#94a3b8; animation:typingBounce 1.2s ease-in-out infinite; }
+.typing-dot:nth-child(2) { animation-delay:0.2s; }
+.typing-dot:nth-child(3) { animation-delay:0.4s; }
+@keyframes typingBounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+/* ── Avatar layout: compact side-by-side row ── */
+.avatar-row { background:linear-gradient(135deg,#0f172a,#1e293b); border-radius:var(--radius); padding:16px; display:flex; align-items:flex-start; gap:14px; }
+.avatar-col { display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0; }
+.avatar-circle-sm { width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#4f46e5); display:flex; align-items:center; justify-content:center; font-size:24px; position:relative; }
+.avatar-speaking-ring { position:absolute; inset:-4px; border-radius:50%; border:3px solid rgba(124,58,237,0.5); animation:speakPulse 1.2s ease-in-out infinite; display:none; }
+.avatar-speaking-ring.show { display:block; }
+@keyframes speakPulse { 0%,100%{transform:scale(1);opacity:0.7} 50%{transform:scale(1.1);opacity:0.3} }
+.avatar-name-sm { color:#94a3b8; font-size:10px; font-weight:600; text-align:center; }
+.avatar-content { flex:1; display:flex; flex-direction:column; gap:8px; min-width:0; }
+/* Voiceover waveform bar */
+.voice-wave { display:flex; align-items:center; gap:3px; height:32px; background:rgba(255,255,255,0.05); border-radius:8px; padding:0 12px; }
+.wave-bar { width:3px; border-radius:2px; background:#818cf8; animation:waveBounce 0.8s ease-in-out infinite; }
+.wave-bar:nth-child(1){height:8px;animation-delay:0s}
+.wave-bar:nth-child(2){height:20px;animation-delay:0.1s}
+.wave-bar:nth-child(3){height:14px;animation-delay:0.2s}
+.wave-bar:nth-child(4){height:24px;animation-delay:0.3s}
+.wave-bar:nth-child(5){height:10px;animation-delay:0.15s}
+.wave-bar:nth-child(6){height:18px;animation-delay:0.25s}
+.wave-bar:nth-child(7){height:6px;animation-delay:0.05s}
+.wave-bar:nth-child(8){height:22px;animation-delay:0.35s}
+.wave-bar:nth-child(9){height:12px;animation-delay:0.2s}
+.wave-bar:nth-child(10){height:16px;animation-delay:0.1s}
+.voice-wave.idle .wave-bar { animation:none; height:4px; background:#334155; }
+@keyframes waveBounce { 0%,100%{transform:scaleY(0.4)} 50%{transform:scaleY(1)} }
+.voice-status-text { font-size:12px; color:#94a3b8; font-style:italic; }
+/* Customer voice response panel */
+.voice-response-panel { background:#faf5ff; border:1px solid #ddd6fe; border-radius:var(--radius); padding:14px; display:flex; flex-direction:column; gap:10px; }
+.voice-response-title { font-size:12px; font-weight:600; color:var(--purple); text-transform:uppercase; letter-spacing:0.06em; }
+.mic-area { display:flex; align-items:center; gap:12px; }
+.mic-btn { width:52px; height:52px; border-radius:50%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; transition:all 0.2s; }
+.mic-btn.idle { background:#ede9fe; }
+.mic-btn.listening { background:var(--purple); animation:micPulse 1s ease-in-out infinite; }
+@keyframes micPulse { 0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,0.4)} 50%{box-shadow:0 0 0 10px rgba(124,58,237,0)} }
+.mic-label-wrap { flex:1; }
+.mic-status { font-size:13px; font-weight:600; color:var(--gray-700); }
+.mic-hint { font-size:11px; color:var(--gray-400); margin-top:2px; line-height:1.4; }
+.voice-result { border-radius:8px; padding:10px 12px; font-size:13px; font-weight:500; display:none; }
+.voice-result.show { display:block; }
+.voice-result.correct { background:var(--green-light); color:#166534; border:1px solid #86efac; }
+.voice-result.wrong { background:var(--red-light); color:#991b1b; border:1px solid #fca5a5; }
+/* Customer cam strip */
+.customer-cam { background:#1e293b; border-radius:10px; border:1px solid #374151; overflow:hidden; height:72px; position:relative; display:flex; align-items:center; justify-content:center; }
+.cam-face-small { font-size:26px; }
+.cam-rec-dot { position:absolute; top:8px; right:8px; width:8px; height:8px; border-radius:50%; background:#22c55e; animation:pulse 1.2s infinite; }
+.cam-label { position:absolute; bottom:5px; left:10px; font-size:10px; color:rgba(255,255,255,0.5); font-weight:500; }
+.btn-officer { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; padding:10px 16px; border-radius:10px; border:1.5px solid #7c3aed; background:#fff; color:#7c3aed; cursor:pointer; display:flex; align-items:center; gap:8px; width:100%; justify-content:center; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     ADMIN BAR (global)
+════════════════════════════════════════ -->
+<div class="admin-bar" id="globalAdminBar">
+  <span class="admin-label">🛠 Admin</span>
+  <button class="adm slate" onclick="goHome()">🏠 Home</button>
+  <button class="adm green" onclick="adminAction('perm',true)">✓ Grant Perms</button>
+  <button class="adm red" onclick="adminAction('perm',false)">✗ Deny Perms</button>
+  <button class="adm green" onclick="adminAction('liveness',true)">✓ Liveness</button>
+  <button class="adm red" onclick="adminAction('liveness',false)">✗ Liveness</button>
+  <button class="adm amber" onclick="adminAction('voice',true)">✓ Voice Match</button>
+  <button class="adm red" onclick="adminAction('voice',false)">✗ Voice Match</button>
+  <button class="adm purple" onclick="adminAction('avatar',true)">✓ Avatar Q</button>
+  <button class="adm red" onclick="adminAction('avatar',false)">✗ Avatar Q</button>
+  <button class="adm slate" onclick="adminAction('reset')">↺ Reset</button>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCREEN: HOME
+════════════════════════════════════════ -->
+<div class="screen active" id="screenHome">
+  <div class="home-hero">
+    <div class="home-hero-logo">X</div>
+    <div class="home-hero-title">XXXX Life<br>Verification Portal</div>
+    <div class="home-hero-sub">Select a verification mode to begin the secure customer onboarding journey.</div>
+  </div>
+
+  <div class="home-section-label">Select Verification Mode</div>
+
+  <div class="journey-card" onclick="selectJourney(1)">
+    <div class="journey-icon" style="background:#f0f9ff;">📝</div>
+    <div class="journey-info">
+      <div class="journey-mode">Mode A</div>
+      <div class="journey-title">Consent Without Selfie</div>
+      <div class="journey-desc">Text-based consent journey. Customer reviews and agrees to all policy details without any camera requirement.</div>
+    </div>
+    <div class="journey-arrow">›</div>
+  </div>
+
+  <div class="journey-card" onclick="selectJourney(2)">
+    <div class="journey-icon" style="background:#f0fdf4;">🤳</div>
+    <div class="journey-info">
+      <div class="journey-mode">Mode B</div>
+      <div class="journey-title">Consent With Selfie</div>
+      <div class="journey-desc">Standard selfie-based journey with liveness detection. Customer completes verification with a 3-blink check.</div>
+    </div>
+    <div class="journey-arrow">›</div>
+  </div>
+
+  <div class="journey-card" onclick="selectJourney(3)">
+    <div class="journey-icon" style="background:#fff7ed;">🎥</div>
+    <div class="journey-info">
+      <div class="journey-mode">Mode C</div>
+      <div class="journey-title">Self-Recorded Video Consent</div>
+      <div class="journey-desc">Customer listens to a system voiceover, then records their verbal consent on camera. AI transcribes and validates the response.</div>
+    </div>
+    <div class="journey-arrow">›</div>
+  </div>
+
+  <div class="journey-card" onclick="selectJourney(4)">
+    <div class="journey-icon" style="background:#faf5ff;">🤖</div>
+    <div class="journey-info">
+      <div class="journey-mode">Mode D</div>
+      <div class="journey-title">Interactive AI Avatar Verification</div>
+      <div class="journey-desc">An AI avatar guides the customer through an interactive Q&A across all policy pages. Customer answers questions verbally to proceed.</div>
+    </div>
+    <div class="journey-arrow">›</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCREEN: LANGUAGE SELECTION
+════════════════════════════════════════ -->
+<div class="screen" id="screenLang">
+  <div class="phone" style="min-height:auto;">
+    <div class="app-header">
+      <div class="header-logo">X</div>
+      <div>
+        <div class="header-title">XXXX Life Verification</div>
+        <div class="header-sub">Language Selection</div>
+      </div>
+    </div>
+    <div class="page-content" style="justify-content:center;">
+      <div class="lang-card">
+        <div style="font-size:28px; text-align:center;">🌐</div>
+        <div class="lang-title">Select Your Language</div>
+        <div class="lang-sub">Please choose the language in which you would like to proceed with the verification journey.</div>
+        <div class="lang-select-wrap">
+          <select class="lang-select" id="langSelect" onchange="checkLangSelection()">
+            <option value="">— Please select a language —</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <button class="btn-lang-proceed" id="langProceedBtn" onclick="proceedFromLang()" disabled>Proceed →</button>
+        <button class="btn-home-back" onclick="goHome()">← Back to Home</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCREEN: JOURNEY 1 — No Selfie
+════════════════════════════════════════ -->
+<div class="screen" id="screenJ1">
+  <div class="phone">
+    <div class="app-header">
+      <div class="header-logo">X</div>
+      <div>
+        <div class="header-title">XXXX Life Verification</div>
+        <div class="header-sub">Mode A — Text Consent</div>
+      </div>
+      <div style="margin-left:auto;"><span class="tag" style="background:#f0f9ff;color:#0369a1;">No Selfie</span></div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-steps">
+        <div class="step-dot active" id="j1s1">1</div><div class="step-line" id="j1l1"></div>
+        <div class="step-dot" id="j1s2">2</div><div class="step-line" id="j1l2"></div>
+        <div class="step-dot" id="j1s3">3</div><div class="step-line" id="j1l3"></div>
+        <div class="step-dot" id="j1s4">4</div><div class="step-line" id="j1l4"></div>
+        <div class="step-dot" id="j1s5">5</div>
+      </div>
+      <div class="progress-label" id="j1ProgressLabel">Step 1 of 5 — Instructions</div>
+    </div>
+    <div class="page-content">
+      <!-- J1 P1: Instructions -->
+      <div class="jpage active" id="j1p1">
+        <div class="card">
+          <div class="card-title">Instructions</div>
+          <div class="instruction-box">
+            1. Kindly go through the key policy details on each page and provide your consent by clicking the <strong>Agree</strong> button at the bottom.<br><br>
+            2. If you disagree with any detail, click <strong>Disagree</strong> and select a reason from the dropdown.
+          </div>
+        </div>
+        <div class="info-note"><span>🔒</span><span>Your data is encrypted and processed securely in accordance with IRDAI guidelines and XXXX Life's privacy policy.</span></div>
+      </div>
+      <!-- J1 P2: Customer Details -->
+      <div class="jpage" id="j1p2">
+        <div class="card">
+          <div class="card-title">Personal Information</div>
+          <div class="field-group"><div class="field-label">Full Name</div><div class="field-value">Rajesh Kumar Sharma</div></div>
+          <div class="field-group"><div class="field-label">Date of Birth</div><div class="field-value">12 Mar 1984</div></div>
+          <div class="field-group"><div class="field-label">Address</div><div class="field-value">B-204, Sunshine Towers, Andheri West, Mumbai – 400 053</div></div>
+          <div class="field-group"><div class="field-label">Email ID</div><div class="field-value">rajesh.sharma@email.com</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Professional & Financial Profile</div>
+          <div class="field-group"><div class="field-label">Occupation</div><div class="field-value">Salaried — Private Sector</div></div>
+          <div class="field-group"><div class="field-label">Annual Income</div><div class="field-value">₹ 18,00,000</div></div>
+        </div>
+      </div>
+      <!-- J1 P3: Product Details -->
+      <div class="jpage" id="j1p3">
+        <div class="card">
+          <div class="card-title">Product Information</div>
+          <div class="product-row"><span class="product-key">Product Name</span><span class="product-val">XXXX Life Sanchay Plus</span></div>
+          <div class="product-row"><span class="product-key">Premium Amount</span><span class="product-val">₹ 24,000 / year</span></div>
+          <div class="product-row"><span class="product-key">Payment Frequency</span><span class="product-val">Annual</span></div>
+          <div class="product-row"><span class="product-key">Policy Term</span><span class="product-val">20 Years</span></div>
+          <div class="product-row"><span class="product-key">Life Cover</span><span class="product-val">₹ 50,00,000</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Benefits</div>
+          <div class="product-row"><span class="product-key">Maturity Benefit</span><span class="product-val">₹ 7,20,000</span></div>
+          <div class="product-row"><span class="product-key">Income Benefit</span><span class="product-val">₹ 30,000 / month (Yr 11–20)</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Add-Ons / Riders</div>
+          <div class="product-row"><span class="product-key">Critical Illness Rider</span><span class="product-val" style="color:var(--green);">Included</span></div>
+          <div class="product-row"><span class="product-key">Accidental Death Benefit</span><span class="product-val" style="color:var(--green);">Included</span></div>
+          <div class="product-row"><span class="product-key">Waiver of Premium</span><span class="product-val" style="color:var(--gray-400);">Not opted</span></div>
+        </div>
+      </div>
+      <!-- J1 P4: Disclaimers -->
+      <div class="jpage" id="j1p4">
+        <div class="info-note"><span>⚠️</span><span>Please read all disclaimers carefully before providing your consent.</span></div>
+        <div>
+          <div class="disclaimer-item"><div class="disclaimer-num">1</div><div class="disclaimer-text">Please note that missing premium payment timeline will impact the policy coverage.</div></div>
+          <div class="disclaimer-item"><div class="disclaimer-num">2</div><div class="disclaimer-text">Policy benefit will be impacted if the policy is discontinued before the completion of the policy term.</div></div>
+          <div class="disclaimer-item"><div class="disclaimer-num">3</div><div class="disclaimer-text">Please consult your tax advisor for tax benefits of the product.</div></div>
+        </div>
+      </div>
+      <!-- J1 P5: Final — No Selfie -->
+      <div class="jpage" id="j1p5">
+        <div class="summary-card">
+          <div class="summary-title">Your Consent Summary</div>
+          <div class="summary-body">✅ Customer Details — <strong>Agreed</strong><br>✅ Product Details — <strong>Agreed</strong><br>✅ Disclaimers — <strong>Agreed</strong></div>
+        </div>
+        <div class="consent-check-card">
+          <div class="consent-check-label" onclick="j1ToggleConsent()">
+            <div class="consent-checkbox" id="j1consentBox"><span id="j1consentTick" style="display:none;">✓</span></div>
+            <div class="consent-check-text">I hereby confirm my agreement on the details shown in the previous pages.</div>
+          </div>
+        </div>
+        <button class="btn-outline-full" onclick="j1Restart()">↩ Restart the Verification</button>
+      </div>
+      <!-- J1 Success -->
+      <div class="jpage" id="j1success">
+        <div class="journey-end">
+          <div class="end-icon success">✅</div>
+          <div class="end-title">Verification Complete!</div>
+          <div class="end-sub">Your consent has been verified and recorded. Our team will reach out within 24 hours.</div>
+          <div class="ref-box"><div style="font-size:12px;color:var(--gray-400);margin-bottom:4px;">Reference Number</div><div class="ref-num">VRF-2024-A-09184</div></div>
+          <button class="btn-outline-full" style="margin-top:8px;" onclick="goHome()">← Return to Home</button>
+        </div>
+      </div>
+      <!-- J1 Disagree End -->
+      <div class="jpage" id="j1end">
+        <div class="journey-end">
+          <div class="end-icon fail">❌</div>
+          <div class="end-title">Journey Ended</div>
+          <div class="end-sub" id="j1endMsg">Your disagreement has been recorded.</div>
+          <div class="ref-box"><div style="font-size:12px;color:var(--gray-400);margin-bottom:4px;">Ticket Number</div><div class="ref-num">DIS-2024-A-04723</div></div>
+          <div style="font-size:13px;color:var(--gray-400);margin-top:8px;">Need help? Call <strong style="color:var(--brand);">1800-266-9777</strong></div>
+          <button class="btn-outline-full" onclick="goHome()">← Return to Home</button>
+        </div>
+      </div>
+    </div>
+    <div class="action-bar" id="j1ActionBar">
+      <button class="btn btn-primary" id="j1AgreeBtn" onclick="j1Agree()">✓ Agree & Continue</button>
+      <button class="btn btn-secondary" id="j1DisagreeBtn" onclick="openDisagreeModal('j1')" style="display:none;">✗ Disagree</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCREEN: JOURNEY 2 — With Selfie (v3)
+════════════════════════════════════════ -->
+<div class="screen" id="screenJ2">
+  <div class="phone">
+    <div class="app-header">
+      <div class="header-logo">X</div>
+      <div>
+        <div class="header-title">XXXX Life Verification</div>
+        <div class="header-sub">Mode B — Selfie Consent</div>
+      </div>
+      <div style="margin-left:auto;"><span class="tag tag-ai">AI Powered</span></div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-steps">
+        <div class="step-dot active" id="j2s1">1</div><div class="step-line" id="j2l1"></div>
+        <div class="step-dot" id="j2s2">2</div><div class="step-line" id="j2l2"></div>
+        <div class="step-dot" id="j2s3">3</div><div class="step-line" id="j2l3"></div>
+        <div class="step-dot" id="j2s4">4</div><div class="step-line" id="j2l4"></div>
+        <div class="step-dot" id="j2s5">5</div>
+      </div>
+      <div class="progress-label" id="j2ProgressLabel">Step 1 of 5 — Instructions & Permissions</div>
+    </div>
+    <div class="page-content">
+      <!-- J2 P1 -->
+      <div class="jpage active" id="j2p1">
+        <div class="card">
+          <div class="card-title">System Permissions Required</div>
+          <div class="perm-row">
+            <div class="perm-icon" style="background:#fef3c7;">📷</div>
+            <div class="perm-info"><div class="perm-name">Camera Access</div><div class="perm-desc">Required for liveness check on final step</div></div>
+            <div class="perm-status pending" id="j2camPerm">—</div>
+          </div>
+          <div class="perm-row">
+            <div class="perm-icon" style="background:#e0f2fe;">📍</div>
+            <div class="perm-info"><div class="perm-name">Location Access</div><div class="perm-desc">Required to verify your presence</div></div>
+            <div class="perm-status pending" id="j2locPerm">—</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Instructions</div>
+          <div class="instruction-box">
+            1. Kindly go through the key policy details on each page and provide your consent by clicking the <strong>Agree</strong> button.<br><br>
+            2. If you disagree with any detail, click <strong>Disagree</strong> and select a reason from the dropdown.<br><br>
+            3. On the final page, please confirm your agreement and complete a liveness check to finish the verification.
+          </div>
+        </div>
+        <div class="info-note"><span>🔒</span><span>Your data is encrypted and processed securely in accordance with IRDAI guidelines.</span></div>
+      </div>
+      <!-- J2 P2 -->
+      <div class="jpage" id="j2p2">
+        <div class="card">
+          <div class="card-title">Personal Information</div>
+          <div class="field-group"><div class="field-label">Full Name</div><div class="field-value">Rajesh Kumar Sharma</div></div>
+          <div class="field-group"><div class="field-label">Date of Birth</div><div class="field-value">12 Mar 1984</div></div>
+          <div class="field-group"><div class="field-label">Address</div><div class="field-value">B-204, Sunshine Towers, Andheri West, Mumbai – 400 053</div></div>
+          <div class="field-group"><div class="field-label">Email ID</div><div class="field-value">rajesh.sharma@email.com</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Professional & Financial Profile</div>
+          <div class="field-group"><div class="field-label">Occupation</div><div class="field-value">Salaried — Private Sector</div></div>
+          <div class="field-group"><div class="field-label">Annual Income</div><div class="field-value">₹ 18,00,000</div></div>
+        </div>
+      </div>
+      <!-- J2 P3 -->
+      <div class="jpage" id="j2p3">
+        <div class="card">
+          <div class="card-title">Product Information</div>
+          <div class="product-row"><span class="product-key">Product Name</span><span class="product-val">XXXX Life Sanchay Plus</span></div>
+          <div class="product-row"><span class="product-key">Premium Amount</span><span class="product-val">₹ 24,000 / year</span></div>
+          <div class="product-row"><span class="product-key">Payment Frequency</span><span class="product-val">Annual</span></div>
+          <div class="product-row"><span class="product-key">Policy Term</span><span class="product-val">20 Years</span></div>
+          <div class="product-row"><span class="product-key">Life Cover</span><span class="product-val">₹ 50,00,000</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Benefits</div>
+          <div class="product-row"><span class="product-key">Maturity Benefit</span><span class="product-val">₹ 7,20,000</span></div>
+          <div class="product-row"><span class="product-key">Income Benefit</span><span class="product-val">₹ 30,000 / month (Yr 11–20)</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Add-Ons / Riders</div>
+          <div class="product-row"><span class="product-key">Critical Illness Rider</span><span class="product-val" style="color:var(--green);">Included</span></div>
+          <div class="product-row"><span class="product-key">Accidental Death Benefit</span><span class="product-val" style="color:var(--green);">Included</span></div>
+          <div class="product-row"><span class="product-key">Waiver of Premium</span><span class="product-val" style="color:var(--gray-400);">Not opted</span></div>
+        </div>
+      </div>
+      <!-- J2 P4 -->
+      <div class="jpage" id="j2p4">
+        <div class="info-note"><span>⚠️</span><span>Please read all disclaimers carefully before providing your consent.</span></div>
+        <div>
+          <div class="disclaimer-item"><div class="disclaimer-num">1</div><div class="disclaimer-text">Please note that missing premium payment timeline will impact the policy coverage.</div></div>
+          <div class="disclaimer-item"><div class="disclaimer-num">2</div><div class="disclaimer-text">Policy benefit will be impacted if the policy is discontinued before the completion of the policy term.</div></div>
+          <div class="disclaimer-item"><div class="disclaimer-num">3</div><div class="disclaimer-text">Please consult your tax advisor for tax benefits of the product.</div></div>
+        </div>
+      </div>
+      <!-- J2 P5: Final with Selfie -->
+      <div class="jpage" id="j2p5">
+        <div class="summary-card">
+          <div class="summary-title">Your Consent Summary</div>
+          <div class="summary-body">✅ Customer Details — <strong>Agreed</strong><br>✅ Product Details — <strong>Agreed</strong><br>✅ Disclaimers — <strong>Agreed</strong></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Identity Liveness Check</div>
+          <div class="info-note" style="margin-bottom:12px;"><span>🎥</span><span>Position your face within the frame and blink <strong>3 times</strong> to confirm your presence.</span></div>
+          <div class="selfie-area">
+            <div class="selfie-overlay">
+              <div class="face-guide" id="j2faceGuide"><span style="font-size:38px;">👤</span></div>
+              <div class="selfie-msg" id="j2selfieMsg">Ready — blink 3 times when ready</div>
+              <div class="blink-progress"><div class="blink-dot" id="j2b1"></div><div class="blink-dot" id="j2b2"></div><div class="blink-dot" id="j2b3"></div></div>
+            </div>
+          </div>
+          <div class="liveness-result pass" id="j2livenessPass"><div class="selfie-captured-thumb">🧑</div><div><div style="font-weight:600;">Liveness Confirmed</div><div style="font-size:12px;margin-top:2px;">Your presence has been verified</div></div></div>
+          <div class="liveness-result fail" id="j2livenessFail">⚠️ Liveness check failed. Please try again.</div>
+        </div>
+        <div class="consent-check-card">
+          <div class="consent-check-label" onclick="j2ToggleConsent()">
+            <div class="consent-checkbox" id="j2consentBox"><span id="j2consentTick" style="display:none;">✓</span></div>
+            <div class="consent-check-text">I hereby confirm my agreement on the details shown in the previous pages.</div>
+          </div>
+        </div>
+        <button class="btn-outline-full" onclick="j2Restart()">↩ Restart the Verification</button>
+      </div>
+      <!-- J2 Success -->
+      <div class="jpage" id="j2success">
+        <div class="journey-end">
+          <div class="end-icon success">✅</div>
+          <div class="end-title">Verification Complete!</div>
+          <div class="end-sub">Your identity and consent have been verified and recorded.</div>
+          <div class="ref-box"><div style="font-size:12px;color:var(--gray-400);margin-bottom:4px;">Reference Number</div><div class="ref-num">VRF-2024-B-09185</div></div>
+          <button class="btn-outline-full" style="margin-top:8px;" onclick="goHome()">← Return to Home</button>
+        </div>
+      </div>
+      <!-- J2 Disagree End -->
+      <div class="jpage" id="j2end">
+        <div class="journey-end">
+          <div class="end-icon fail">❌</div><div class="end-title">Journey Ended</div>
+          <div class="end-sub" id="j2endMsg">Your disagreement has been recorded.</div>
+          <div class="ref-box"><div style="font-size:12px;color:var(--gray-400);margin-bottom:4px;">Ticket Number</div><div class="ref-num">DIS-2024-B-04724</div></div>
+          <div style="font-size:13px;color:var(--gray-400);margin-top:8px;">Need help? Call <strong style="color:var(--brand);">1800-266-9777</strong></div>
+          <button class="btn-outline-full" onclick="goHome()">← Return to Home</button>
+        </div>
+      </div>
+    </div>
+    <div class="action-bar" id="j2ActionBar">
+      <button class="btn btn-primary" id="j2AgreeBtn" onclick="j2Agree()">✓ Agree & Continue</button>
+      <button class="btn btn-secondary" id="j2DisagreeBtn" onclick="openDisagreeModal('j2')" style="display:none;">✗ Disagree</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCREEN: JOURNEY 3 — Video Consent
+════════════════════════════════════════ -->
+<div class="screen" id="screenJ3">
+  <div class="phone">
+    <div class="app-header">
+      <div class="header-logo">X</div>
+      <div>
+        <div class="header-title">XXXX Life Verification</div>
+        <div class="header-sub">Mode C — Video Consent</div>
+      </div>
+      <div style="margin-left:auto;"><span class="tag" style="background:#fff7ed;color:#92400e;">Video</span></div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-steps">
+        <div class="step-dot active" id="j3s1">1</div><div class="step-line" id="j3l1"></div>
+        <div class="step-dot" id="j3s2">2</div><div class="step-line" id="j3l2"></div>
+        <div class="step-dot" id="j3s3">3</div><div class="step-line" id="j3l3"></div>
+        <div class="step-dot" id="j3s4">4</div><div class="step-line" id="j3l4"></div>
+        <div class="step-dot" id="j3s5">5</div><div class="step-line" id="j3l5"></div>
+        <div class="step-dot" id="j3s6">6</div>
+      </div>
+      <div class="progress-label" id="j3ProgressLabel">Step 1 of 6 — Instructions & Permissions</div>
+    </div>
+    <div class="page-content">
+      <!-- J3 P1 -->
+      <div class="jpage active" id="j3p1">
+        <div class="card">
+          <div class="card-title">System Permissions Required</div>
+          <div class="perm-row">
+            <div class="perm-icon" style="background:#fef3c7;">📷</div>
+            <div class="perm-info"><div class="perm-name">Camera & Microphone</div><div class="perm-desc">Required for video and voice consent recording</div></div>
+            <div class="perm-status pending" id="j3camPerm">—</div>
+          </div>
+          <div class="perm-row">
+            <div class="perm-icon" style="background:#e0f2fe;">📍</div>
+            <div class="perm-info"><div class="perm-name">Location Access</div><div class="perm-desc">Required to verify your presence</div></div>
+            <div class="perm-status pending" id="j3locPerm">—</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Instructions</div>
+          <div class="instruction-box">
+            1. Kindly go through the key policy details on each page and provide your consent by clicking the <strong>Agree</strong> button.<br><br>
+            2. If you disagree with any detail, click <strong>Disagree</strong> and select a reason from the dropdown.<br><br>
+            3. At the end of the verification, you will hear a system voiceover summarising the key policy features and disclaimers. After hearing the voiceover, kindly <strong>record your consent over video</strong> by reading the script shown on that page — only if you agree with the details.
+          </div>
+        </div>
+      </div>
+      <!-- J3 P2 Customer Details -->
+      <div class="jpage" id="j3p2">
+        <div class="card">
+          <div class="card-title">Personal Information</div>
+          <div class="field-group"><div class="field-label">Full Name</div><div class="field-value">Rajesh Kumar Sharma</div></div>
+          <div class="field-group"><div class="field-label">Date of Birth</div><div class="field-value">12 Mar 1984</div></div>
+          <div class="field-group"><div class="field-label">Address</div><div class="field-value">B-204, Sunshine Towers, Andheri West, Mumbai – 400 053</div></div>
+          <div class="field-group"><div class="field-label">Email ID</div><div class="field-value">rajesh.sharma@email.com</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Professional & Financial Profile</div>
+          <div class="field-group"><div class="field-label">Occupation</div><div class="field-value">Salaried — Private Sector</div></div>
+          <div class="field-group"><div class="field-label">Annual Income</div><div class="field-value">₹ 18,00,000</div></div>
+        </div>
+      </div>
+      <!-- J3 P3 Product -->
+      <div class="jpage" id="j3p3">
+        <div class="card">
+          <div class="card-title">Product Information</div>
+          <div class="product-row"><span class="product-key">Product Name</span><span class="product-val">XXXX Life Sanchay Plus</span></div>
+          <div class="product-row"><span class="product-key">Premium Amount</span><span class="product-val">₹ 24,000 / year</span></div>
+          <div class="product-row"><span class="product-key">Payment Frequency</span><span class="product-val">Annual</span></div>
+          <div class="product-row"><span class="product-key">Policy Term</span><span class="product-val">20 Years</span></div>
+          <div class="product-row"><span class="product-key">Life Cover</span><span class="product-val">₹ 50,00,000</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Benefits</div>
+          <div class="product-row"><span class="product-key">Maturity Benefit</span><span class="product-val">₹ 7,20,000</span></div>
+          <div class="product-row"><span class="product-key">Income Benefit</span><span class="product-val">₹ 30,000 / month (Yr 11–20)</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Add-Ons / Riders</div>
+          <div class="product-row"><span class="product-key">Critical Illness Rider</span><span class="product-val" style="color:var(--green);">Included</span></div>
+          <div class="product-row"><span class="product-key">Accidental Death Benefit</span><span class="product-val" style="color:var(--green);">Included</span></div>
+          <div class="product-row"><span class="product-key">Waiver of Premium</span><span class="product-val" style="color:var(--gray-400);">Not opted</span></div>
+        </div>
+      </div>
+      <!-- J3 P4 Disclaimers -->
+      <div class="jpage" id="j3p4">
+        <div class="info-note"><span>⚠️</span><span>Please read all disclaimers carefully before providing your consent.</span></div>
+        <div>
+          <div class="disclaimer-item"><div class="disclaimer-num">1</div><div class="disclaimer-text">Missing premium payment timeline will impact the policy coverage.</div></div>
+          <div class="disclaimer-item"><div class="disclaimer-num">2</div><div class="disclaimer-text">Policy benefit will be impacted if the policy is discontinued before the completion of the policy term.</div></div>
+          <div class="disclaimer-item"><div class="disclaimer-num">3</div><div class="disclaimer-text">Please consult your tax advisor for tax benefits of the product.</div></div>
+        </div>
+      </div>
+      <!-- J3 P5: Video & Voice Consent Recording -->
+      <div class="jpage" id="j3p5">
+        <div class="warn-note"><span>📹</span><span>Stay within the camera frame throughout. Moving out of frame will <strong>restart the voiceover from the beginning.</strong></span></div>
+
+        <div class="card">
+          <div class="card-title">Live Camera</div>
+          <div class="video-area" id="j3videoArea">
+            <div class="video-frame-border"></div>
+            <div class="video-rec-badge" id="j3recBadge"><div class="rec-dot"></div> REC</div>
+            <span class="video-face-icon">👤</span>
+            <div class="video-status-msg" id="j3videoStatus">Please blink 3 times to begin voiceover →</div>
+          </div>
+          <div class="info-note" style="margin-top:12px;"><span>👁</span><span id="j3livenessInstruction">Please look into the camera and <strong>blink thrice</strong> for the liveness check and system voiceover to start.</span><span id="j3livenessTick" style="display:none;margin-left:auto;flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--green-light);color:var(--green);font-size:13px;display:none;align-items:center;justify-content:center;font-weight:700;border:1.5px solid var(--green);">✓</span></div>
+          <div class="liveness-result fail" id="j3livenessFail" style="margin-top:10px;">⚠️ Liveness check failed. Please look at camera and retry.</div>
+        </div>
+
+        <div class="card" id="j3teleprompterCard" style="display:none;">
+          <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+            System Voiceover & Script
+            <span id="j3playingBadge" style="font-size:10px;color:var(--gray-400);font-weight:400;text-transform:none;letter-spacing:0;">🔊 Playing...</span>
+          </div>
+          <div class="teleprompter-wrap" id="j3teleWrap">
+            <div class="teleprompter-title">
+              <span>Read along — record your agreement below</span>
+            </div>
+            <div class="teleprompter-inner" id="j3teleInner">
+              <div class="teleprompter-text" id="j3teleText">Please listen carefully to the information and give your agreement once prompted. You are buying a Life Insurance policy of sum assured of <span class="highlight">Rs 10 lakhs</span> by paying a premium of <span class="highlight">Rs 50,000 per year</span> for a period of <span class="highlight">10 years</span>. Withdrawals or discontinuance of premium payment before this period will have adverse impact on the product benefits. By giving your consent you confirm that no promises have been made by the sales person to provide any benefit other than the benefits mentioned in the previous pages.<br><br>Please <strong>read aloud</strong> the lines below to record your agreement:<br><br><span class="highlight">"I, Rajesh Kumar Sharma, confirm that I am buying a policy in the name of Smita Sharma. I have heard and seen the details and convey my agreement."</span></div>
+              <div class="teleprompter-gradient" id="j3teleGrad"></div>
+            </div>
+          </div>
+          <!-- Controls: Replay + Scroll -->
+          <div class="tele-controls">
+            <button class="tele-btn replay" onclick="j3ReplayScript()" id="j3replayBtn">
+              ↺ Replay & Re-record
+            </button>
+            <button class="tele-btn scroll-toggle" onclick="j3ToggleScroll()" id="j3scrollBtn">
+              ↕ Manual Scroll
+            </button>
+          </div>
+          <div id="j3voiceMatchWrap" style="margin-top:14px;display:none;">
+            <div class="voice-match-card pass" id="j3voicePass">
+              <div class="voice-match-title">✅ Voice Consent Captured</div>
+              <div class="voice-match-sub">AI has confirmed your spoken agreement matches the required script. Proceeding to final confirmation.</div>
+            </div>
+            <div class="voice-match-card fail" id="j3voiceFail">
+              <div class="voice-match-title">⚠️ Voice Not Fully Matched</div>
+              <div class="voice-match-sub">AI could not fully confirm your verbal agreement. You may re-record the consent lines only, or proceed — the consent step will be marked <strong>Pending Verification</strong>.</div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:12px;" id="j3voiceFailActions" style="display:none;">
+              <button class="btn btn-secondary" style="flex:1;" onclick="j3ReRecord()">↺ Re-record Only</button>
+              <button class="btn btn-primary" style="flex:1;" onclick="j3ProceedPending()">Proceed →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- J3 P6: Final Confirmation -->
+      <div class="jpage" id="j3p6">
+        <div class="summary-card" id="j3summaryFinal">
+          <div class="summary-title">Your Consent Summary</div>
+          <div class="summary-body" id="j3summaryBody">
+            ✅ Customer Details — <strong>Agreed</strong><br>
+            ✅ Product Details — <strong>Agreed</strong><br>
+            ✅ Disclaimers — <strong>Agreed</strong><br>
+            ✅ Liveness Check — <strong>Passed</strong><br>
+            <span id="j3voiceConsentRow">✅ Voice &amp; Video Consent — <strong>Captured</strong></span>
+          </div>
+        </div>
+        <div class="consent-check-card">
+          <div class="consent-check-label" onclick="j3ToggleConsent()">
+            <div class="consent-checkbox" id="j3consentBox"><span id="j3consentTick" style="display:none;">✓</span></div>
+            <div class="consent-check-text">I hereby confirm my agreement on the details shown in the previous pages.</div>
+          </div>
+        </div>
+        <button class="btn-outline-full" onclick="j3Restart()">↩ Restart the Verification</button>
+      </div>
+
+      <!-- J3 Success -->
+      <div class="jpage" id="j3success">
+        <div class="journey-end">
+          <div class="end-icon success">✅</div>
+          <div class="end-title">Verification Complete!</div>
+          <div class="end-sub">Your video consent and agreement have been recorded successfully.</div>
+          <div class="ref-box"><div style="font-size:12px;color:var(--gray-400);margin-bottom:4px;">Reference Number</div><div class="ref-num">VRF-2024-C-09186</div></div>
+          <button class="btn-outline-full" style="margin-top:8px;" onclick="goHome()">← Return to Home</button>
+        </div>
+      </div>
+      <!-- J3 Pending Success -->
+      <div class="jpage" id="j3successPending">
+        <div class="journey-end">
+          <div class="end-icon pending">⏳</div>
+          <div class="end-title">Submitted for Review</div>
+          <div class="end-sub">Most of your verification is complete. Your voice consent is <strong>pending manual verification</strong> by our team. We will contact you within 24 hours.</div>
+          <div class="ref-box"><div style="font-size:12px;color:var(--gray-400);margin-bottom:4px;">Reference Number</div><div class="ref-num">VRF-2024-C-09186</div></div>
+          <button class="btn-outline-full" style="margin-top:8px;" onclick="goHome()">← Return to Home</button>
+        </div>
+      </div>
+      <!-- J3 Disagree End -->
+      <div class="jpage" id="j3end">
+        <div class="journey-end">
+          <div class="end-icon fail">❌</div><div class="end-title">Journey Ended</div>
+          <div class="end-sub" id="j3endMsg">Your disagreement has been recorded.</div>
+          <div class="ref-box"><div style="font-size:12px;color:var(--gray-400);margin-bottom:4px;">Ticket Number</div><div class="ref-num">DIS-2024-C-04725</div></div>
+          <div style="font-size:13px;color:var(--gray-400);margin-top:8px;">Need help? Call <strong style="color:var(--brand);">1800-266-9777</strong></div>
+          <button class="btn-outline-full" onclick="goHome()">← Return to Home</button>
+        </div>
+      </div>
+    </div>
+    <div class="action-bar" id="j3ActionBar">
+      <button class="btn btn-primary" id="j3AgreeBtn" onclick="j3Agree()">✓ Agree & Continue</button>
+      <button class="btn btn-secondary" id="j3DisagreeBtn" onclick="openDisagreeModal('j3')" style="display:none;">✗ Disagree</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCREEN: JOURNEY 4 — AI Avatar
+════════════════════════════════════════ -->
+<div class="screen" id="screenJ4">
+  <div class="phone">
+    <div class="app-header">
+      <div class="header-logo">X</div>
+      <div>
+        <div class="header-title">XXXX Life Verification</div>
+        <div class="header-sub">Mode D — AI Avatar Interactive</div>
+      </div>
+      <div style="margin-left:auto;"><span class="tag tag-ai">AI Avatar</span></div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-steps">
+        <div class="step-dot active" id="j4s1">1</div><div class="step-line" id="j4l1"></div>
+        <div class="step-dot" id="j4s2">2</div><div class="step-line" id="j4l2"></div>
+        <div class="step-dot" id="j4s3">3</div><div class="step-line" id="j4l3"></div>
+        <div class="step-dot" id="j4s4">4</div><div class="step-line" id="j4l4"></div>
+        <div class="step-dot" id="j4s5">5</div>
+      </div>
+      <div class="progress-label" id="j4ProgressLabel">Step 1 of 5 — Instructions</div>
+    </div>
+    <div class="page-content">
+      <!-- J4 P1: Instructions -->
+      <div class="jpage active" id="j4p1">
+        <div class="card">
+          <div class="card-title">System Permissions Required</div>
+          <div class="perm-row">
+            <div class="perm-icon" style="background:#faf5ff;">🤖</div>
+            <div class="perm-info"><div class="perm-name">Camera & Microphone</div><div class="perm-desc">Required for AI avatar Q&A interaction</div></div>
+            <div class="perm-status pending" id="j4camPerm">—</div>
+          </div>
+          <div class="perm-row">
+            <div class="perm-icon" style="background:#e0f2fe;">📍</div>
+            <div class="perm-info"><div class="perm-name">Location Access</div><div class="perm-desc">Required to verify your presence</div></div>
+            <div class="perm-status pending" id="j4locPerm">—</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Instructions</div>
+          <div class="instruction-box">
+            1. An AI verification avatar will guide you through the policy details across each page.<br><br>
+            2. The avatar will ask you questions based on the information displayed. Please answer correctly to proceed to the next step.<br><br>
+            3. You may request a human <strong>Verification Officer</strong> at any point during the journey for assistance.<br><br>
+            4. Your video and responses are being captured throughout for verification purposes.
+          </div>
+        </div>
+        <div class="info-note"><span>🤖</span><span>This is an AI-assisted verification. Your responses are matched against policy records in real time.</span></div>
+      </div>
+
+      <!-- J4 P2: Customer Details + Voice Q&A -->
+      <div class="jpage" id="j4p2">
+        <!-- Compact avatar row with waveform -->
+        <div class="avatar-row">
+          <div class="avatar-col">
+            <div class="avatar-circle-sm">🤖<div class="avatar-speaking-ring" id="j4ring2"></div></div>
+            <div class="avatar-name-sm">XXXX AI</div>
+          </div>
+          <div class="avatar-content">
+            <div class="voice-wave idle" id="j4wave2">
+              <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+            </div>
+            <div class="voice-status-text" id="j4avatarStatus2">Avatar is preparing your question...</div>
+          </div>
+        </div>
+        <!-- Customer cam strip -->
+        <div class="customer-cam">
+          <span class="cam-face-small">👤</span>
+          <div class="cam-rec-dot"></div>
+          <div class="cam-label">You — being recorded</div>
+        </div>
+        <!-- Policy data -->
+        <div class="card">
+          <div class="card-title">Customer Details</div>
+          <div class="field-group"><div class="field-label">Full Name</div><div class="field-value">Rajesh Kumar Sharma</div></div>
+          <div class="field-group"><div class="field-label">Email ID</div><div class="field-value">rajesh.sharma@email.com</div></div>
+          <div class="field-group"><div class="field-label">Address</div><div class="field-value">B-204, Sunshine Towers, Andheri West, Mumbai – 400 053</div></div>
+          <div class="field-group"><div class="field-label">Annual Income</div><div class="field-value">₹ 18,00,000</div></div>
+        </div>
+        <!-- Voice response panel -->
+        <div class="voice-response-panel">
+          <div class="voice-response-title">Your Voice Response</div>
+          <div class="mic-area">
+            <button class="mic-btn idle" id="j4mic2" onclick="j4ToggleMic(2)">🎤</button>
+            <div class="mic-label-wrap">
+              <div class="mic-status" id="j4micStatus2">Tap mic to respond</div>
+              <div class="mic-hint">Speak your answer clearly. AI will verify your response.</div>
+            </div>
+          </div>
+          <div class="voice-result" id="j4result2"></div>
+        </div>
+        <button class="btn-officer" onclick="alert('Connecting to Verification Officer...\n\n[In production: initiates live video call with officer]')">📞 Connect to Verification Officer for Support</button>
+      </div>
+
+      <!-- J4 P3: Product Details + Voice Q&A -->
+      <div class="jpage" id="j4p3">
+        <div class="avatar-row">
+          <div class="avatar-col">
+            <div class="avatar-circle-sm">🤖<div class="avatar-speaking-ring" id="j4ring3"></div></div>
+            <div class="avatar-name-sm">XXXX AI</div>
+          </div>
+          <div class="avatar-content">
+            <div class="voice-wave idle" id="j4wave3">
+              <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+            </div>
+            <div class="voice-status-text" id="j4avatarStatus3">Avatar is preparing your question...</div>
+          </div>
+        </div>
+        <div class="customer-cam">
+          <span class="cam-face-small">👤</span>
+          <div class="cam-rec-dot"></div>
+          <div class="cam-label">You — being recorded</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Product Information</div>
+          <div class="product-row"><span class="product-key">Premium Amount</span><span class="product-val">₹ 24,000 / year</span></div>
+          <div class="product-row"><span class="product-key">Policy Term</span><span class="product-val">20 Years</span></div>
+          <div class="product-row"><span class="product-key">Life Cover</span><span class="product-val">₹ 50,00,000</span></div>
+          <div class="product-row"><span class="product-key">Payment Frequency</span><span class="product-val">Annual</span></div>
+          <div class="product-row"><span class="product-key">Maturity Benefit</span><span class="product-val">₹ 7,20,000</span></div>
+        </div>
+        <div class="voice-response-panel">
+          <div class="voice-response-title">Your Voice Response</div>
+          <div class="mic-area">
+            <button class="mic-btn idle" id="j4mic3" onclick="j4ToggleMic(3)">🎤</button>
+            <div class="mic-label-wrap">
+              <div class="mic-status" id="j4micStatus3">Tap mic to respond</div>
+              <div class="mic-hint">Speak your answer clearly. AI will verify your response.</div>
+            </div>
+          </div>
+          <div class="voice-result" id="j4result3"></div>
+        </div>
+        <button class="btn-officer" onclick="alert('Connecting to Verification Officer...\n\n[In production: initiates live video call with officer]')">📞 Connect to Verification Officer for Support</button>
+      </div>
+
+      <!-- J4 P4: Disclaimers + Voice Q&A -->
+      <div class="jpage" id="j4p4">
+        <div class="avatar-row">
+          <div class="avatar-col">
+            <div class="avatar-circle-sm">🤖<div class="avatar-speaking-ring" id="j4ring4"></div></div>
+            <div class="avatar-name-sm">XXXX AI</div>
+          </div>
+          <div class="avatar-content">
+            <div class="voice-wave idle" id="j4wave4">
+              <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+            </div>
+            <div class="voice-status-text" id="j4avatarStatus4">Avatar is preparing your question...</div>
+          </div>
+        </div>
+        <div class="customer-cam">
+          <span class="cam-face-small">👤</span>
+          <div class="cam-rec-dot"></div>
+          <div class="cam-label">You — being recorded</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Disclaimers</div>
+          <div class="disclaimer-item"><div class="disclaimer-num">1</div><div class="disclaimer-text">Missing premium payment timeline will impact the policy coverage.</div></div>
+          <div class="disclaimer-item"><div class="disclaimer-num">2</div><div class="disclaimer-text">Policy benefit will be impacted if discontinued before policy term completion.</div></div>
+          <div class="disclaimer-item"><div class="disclaimer-num">3</div><div class="disclaimer-text">Please consult your tax advisor for tax benefits of the product.</div></div>
+        </div>
+        <div class="voice-response-panel">
+          <div class="voice-response-title">Your Voice Response</div>
+          <div class="mic-area">
+            <button class="mic-btn idle" id="j4mic4" onclick="j4ToggleMic(4)">🎤</button>
+            <div class="mic-label-wrap">
+              <div class="mic-status" id="j4micStatus4">Tap mic to respond</div>
+              <div class="mic-hint">Speak your answer clearly. AI will verify your response.</div>
+            </div>
+          </div>
+          <div class="voice-result" id="j4result4"></div>
+        </div>
+        <button class="btn-officer" onclick="alert('Connecting to Verification Officer...\n\n[In production: initiates live video call with officer]')">📞 Connect to Verification Officer for Support</button>
+      </div>
+
+      <!-- J4 P5: Final -->
+      <div class="jpage" id="j4p5">
+        <div class="summary-card">
+          <div class="summary-title">Verification Summary</div>
+          <div class="summary-body">
+            ✅ Customer Details — <strong>Verified by AI</strong><br>
+            ✅ Product Details — <strong>Verified by AI</strong><br>
+            ✅ Disclaimers — <strong>Verified by AI</strong>
+          </div>
+        </div>
+        <div class="consent-check-card">
+          <div class="consent-check-label" onclick="j4ToggleConsent()">
+            <div class="consent-checkbox" id="j4consentBox"><span id="j4consentTick" style="display:none;">✓</span></div>
+            <div class="consent-check-text">I hereby confirm my agreement on the details shown in the previous pages.</div>
+          </div>
+        </div>
+        <button class="btn-outline-full" onclick="j4Restart()">↩ Restart the Verification</button>
+      </div>
+
+      <!-- J4 Success -->
+      <div class="jpage" id="j4success">
+        <div class="journey-end">
+          <div class="end-icon success">✅</div>
+          <div class="end-title">AI Verification Complete!</div>
+          <div class="end-sub">All questions were answered correctly. Your identity and consent have been recorded by the AI verification system.</div>
+          <div class="ref-box"><div style="font-size:12px;color:var(--gray-400);margin-bottom:4px;">Reference Number</div><div class="ref-num">VRF-2024-D-09187</div></div>
+          <button class="btn-outline-full" style="margin-top:8px;" onclick="goHome()">← Return to Home</button>
+        </div>
+      </div>
+      <!-- J4 Disagree End -->
+      <div class="jpage" id="j4end">
+        <div class="journey-end">
+          <div class="end-icon fail">❌</div><div class="end-title">Journey Ended</div>
+          <div class="end-sub" id="j4endMsg">Your disagreement has been recorded.</div>
+          <div class="ref-box"><div style="font-size:12px;color:var(--gray-400);margin-bottom:4px;">Ticket Number</div><div class="ref-num">DIS-2024-D-04726</div></div>
+          <div style="font-size:13px;color:var(--gray-400);margin-top:8px;">Need help? Call <strong style="color:var(--brand);">1800-266-9777</strong></div>
+          <button class="btn-outline-full" onclick="goHome()">← Return to Home</button>
+        </div>
+      </div>
+    </div>
+    <div class="action-bar" id="j4ActionBar">
+      <button class="btn btn-primary" id="j4AgreeBtn" onclick="j4Agree()">✓ Agree & Continue</button>
+      <button class="btn btn-secondary" id="j4DisagreeBtn" onclick="openDisagreeModal('j4')" style="display:none;">✗ Disagree</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHARED DISAGREE MODAL -->
+<div class="modal-overlay" id="disagreeModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Reason for Disagreement</div>
+    <div class="modal-sub">Please select a reason so we can assist you better.</div>
+    <select class="select-field" id="disagreeCategory">
+      <option value="">— Select category —</option>
+      <option>Personal / Contact Details</option>
+      <option>Product / Premium Details</option>
+      <option>Policy Terms & Benefits</option>
+      <option>Disclaimer / Terms</option>
+      <option>Other</option>
+    </select>
+    <select class="select-field" id="disagreeReason">
+      <option value="">— Select specific reason —</option>
+      <option>Details are incorrect / don't match</option>
+      <option>I was not informed about this</option>
+      <option>I do not agree with the terms</option>
+      <option>I need more clarification</option>
+      <option>Premium amount differs from what was communicated</option>
+      <option>I want to modify / change details</option>
+      <option>I want to cancel the policy</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeDisagreeModal()">Cancel</button>
+      <button class="btn-modal-submit" onclick="submitDisagree()">Submit & End Journey</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════
+   GLOBAL STATE
+═══════════════════════════════════════ */
+let activeJourney = 0;
+let activeScreen = 'screenHome';
+let disagreeTarget = '';
+
+const state = {
+  j1: { page: 1, consent: false },
+  j2: { page: 1, perms: false, liveness: null, consent: false },
+  j3: { page: 1, perms: false, liveness: null, voiceResult: null, consent: false, voicePending: false },
+  j4: { page: 1, perms: false, consent: false, answeredPages: {} }
+};
+
+/* ═══════════════════════════════════════
+   SCREEN NAVIGATION
+═══════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  activeScreen = id;
+}
+
+function goHome() {
+  showScreen('screenHome');
+}
+
+function selectJourney(n) {
+  activeJourney = n;
+  // Reset lang select
+  document.getElementById('langSelect').value = '';
+  document.getElementById('langProceedBtn').disabled = true;
+  showScreen('screenLang');
+}
+
+function checkLangSelection() {
+  const val = document.getElementById('langSelect').value;
+  document.getElementById('langProceedBtn').disabled = !val;
+}
+
+function proceedFromLang() {
+  const screens = { 1: 'screenJ1', 2: 'screenJ2', 3: 'screenJ3', 4: 'screenJ4' };
+  showScreen(screens[activeJourney]);
+  if (activeJourney === 4) j4InitPage(2); // pre-load avatar Q for J4
+}
+
+/* ═══════════════════════════════════════
+   SHARED HELPERS
+═══════════════════════════════════════ */
+function showJPage(j, pageId) {
+  document.querySelectorAll(`#screenJ${j} .jpage`).forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+}
+
+function updateProgress(prefix, current, total) {
+  const labels = {
+    j1: ['Instructions','Customer Details','Product Details','Disclaimers','Final Verification'],
+    j2: ['Instructions & Permissions','Customer Details','Product Details','Disclaimers','Final Verification'],
+    j3: ['Instructions & Permissions','Customer Details','Product Details','Disclaimers','Video Consent','Final Confirmation'],
+    j4: ['Instructions','Customer Details','Product Details','Disclaimers','Final Verification']
+  };
+  for (let i = 1; i <= total; i++) {
+    const dot = document.getElementById(prefix + 's' + i);
+    if (!dot) continue;
+    if (i < current) { dot.className = 'step-dot done'; dot.textContent = '✓'; }
+    else if (i === current) { dot.className = 'step-dot active'; dot.textContent = i; }
+    else { dot.className = 'step-dot'; dot.textContent = i; }
+    const line = document.getElementById(prefix + 'l' + i);
+    if (line) line.className = 'step-line' + (i < current ? ' done' : '');
+  }
+  const lbl = document.getElementById(prefix + 'ProgressLabel');
+  if (lbl && labels[prefix]) lbl.textContent = 'Step ' + current + ' of ' + total + ' — ' + (labels[prefix][current - 1] || '');
+}
+
+function openDisagreeModal(target) {
+  disagreeTarget = target;
+  document.getElementById('disagreeCategory').value = '';
+  document.getElementById('disagreeReason').value = '';
+  document.getElementById('disagreeModal').classList.add('open');
+}
+function closeDisagreeModal() {
+  document.getElementById('disagreeModal').classList.remove('open');
+}
+function submitDisagree() {
+  const cat = document.getElementById('disagreeCategory').value;
+  const reason = document.getElementById('disagreeReason').value;
+  if (!reason) { alert('Please select a reason to proceed.'); return; }
+  closeDisagreeModal();
+  const msg = 'Your concern about "' + (cat || 'policy details') + '" has been recorded. An advisor will contact you within 24 hours.';
+  document.getElementById(disagreeTarget + 'ActionBar').style.display = 'none';
+  document.getElementById(disagreeTarget + 'endMsg').textContent = msg;
+  showJPage(disagreeTarget.replace('j',''), disagreeTarget + 'end');
+}
+
+function runBlinkAnim(dotIds, msgEl, onPass, onFail, pass) {
+  const dots = dotIds.map(id => document.getElementById(id));
+  if (!pass) { msgEl.textContent = 'Liveness check failed'; onFail(); return; }
+  msgEl.textContent = 'Detecting eye blinks...';
+  let count = 0;
+  const iv = setInterval(() => {
+    if (count >= 3) {
+      clearInterval(iv);
+      msgEl.textContent = '3 blinks detected ✓';
+      onPass();
+      return;
+    }
+    dots[count].className = 'blink-dot done';
+    msgEl.textContent = 'Blink ' + (count+1) + ' of 3 detected...';
+    count++;
+  }, 800);
+}
+
+/* ═══════════════════════════════════════
+   JOURNEY 1 — No Selfie
+═══════════════════════════════════════ */
+const j1Labels = ['Instructions','Customer Details','Product Details','Disclaimers','Final Verification'];
+
+function j1SetPage(n) {
+  state.j1.page = n;
+  showJPage(1, n <= 5 ? 'j1p'+n : 'j1p5');
+  updateProgress('j1', n, 5);
+  const bar = document.getElementById('j1ActionBar');
+  const agree = document.getElementById('j1AgreeBtn');
+  const dis = document.getElementById('j1DisagreeBtn');
+  if (n === 5) {
+    agree.textContent = '✓ Complete Verification';
+    agree.disabled = !state.j1.consent;
+    dis.style.display = 'none';
+  } else {
+    agree.textContent = n === 1 ? '✓ Proceed' : '✓ Agree & Continue';
+    agree.disabled = false;
+    dis.style.display = n > 1 ? 'flex' : 'none';
+  }
+  bar.style.display = 'flex';
+}
+function j1Agree() {
+  if (state.j1.page < 5) j1SetPage(state.j1.page + 1);
+  else { document.getElementById('j1ActionBar').style.display='none'; showJPage(1,'j1success'); }
+}
+function j1ToggleConsent() {
+  state.j1.consent = !state.j1.consent;
+  const box = document.getElementById('j1consentBox');
+  const tick = document.getElementById('j1consentTick');
+  box.classList.toggle('checked', state.j1.consent);
+  tick.style.display = state.j1.consent ? 'block' : 'none';
+  document.getElementById('j1AgreeBtn').disabled = !state.j1.consent;
+}
+function j1Restart() { state.j1.consent=false; j1SetPage(1); }
+
+/* ═══════════════════════════════════════
+   JOURNEY 2 — With Selfie
+═══════════════════════════════════════ */
+function j2SetPage(n) {
+  state.j2.page = n;
+  showJPage(2, n <= 5 ? 'j2p'+n : 'j2p5');
+  updateProgress('j2', n, 5);
+  const agree = document.getElementById('j2AgreeBtn');
+  const dis = document.getElementById('j2DisagreeBtn');
+  const bar = document.getElementById('j2ActionBar');
+  bar.style.display = 'flex';
+  if (n === 1) {
+    agree.textContent = '✓ Proceed';
+    agree.disabled = !state.j2.perms;
+    dis.style.display = 'none';
+  } else if (n === 5) {
+    agree.textContent = '✓ Complete Verification';
+    agree.disabled = !(state.j2.liveness && state.j2.consent);
+    dis.style.display = 'none';
+  } else {
+    agree.textContent = '✓ Agree & Continue';
+    agree.disabled = false;
+    dis.style.display = 'flex';
+  }
+}
+function j2Agree() {
+  if (state.j2.page < 5) j2SetPage(state.j2.page + 1);
+  else { document.getElementById('j2ActionBar').style.display='none'; showJPage(2,'j2success'); }
+}
+function j2ToggleConsent() {
+  state.j2.consent = !state.j2.consent;
+  const box = document.getElementById('j2consentBox');
+  const tick = document.getElementById('j2consentTick');
+  box.classList.toggle('checked', state.j2.consent);
+  tick.style.display = state.j2.consent ? 'block' : 'none';
+  document.getElementById('j2AgreeBtn').disabled = !(state.j2.liveness && state.j2.consent);
+}
+function j2Restart() { state.j2.liveness=null; state.j2.consent=false; state.j2.perms=false; j2ResetLiveness(); j2SetPage(1); }
+function j2ResetLiveness() {
+  ['j2livenessPass','j2livenessFail'].forEach(id => document.getElementById(id).classList.remove('show'));
+  [1,2,3].forEach(i => document.getElementById('j2b'+i).className='blink-dot');
+  document.getElementById('j2selfieMsg').textContent = 'Ready — blink 3 times when ready';
+  const fg = document.getElementById('j2faceGuide');
+  if (fg) fg.classList.remove('captured');
+}
+
+/* ═══════════════════════════════════════
+   JOURNEY 3 — Video Consent
+═══════════════════════════════════════ */
+let j3teleTimer = null;
+let j3teleOffset = 0;
+
+function j3SetPage(n) {
+  state.j3.page = n;
+  const pageId = n === 5 ? 'j3p5' : n === 6 ? 'j3p6' : 'j3p'+n;
+  showJPage(3, pageId);
+  updateProgress('j3', n, 6);
+  const agree = document.getElementById('j3AgreeBtn');
+  const dis = document.getElementById('j3DisagreeBtn');
+  const bar = document.getElementById('j3ActionBar');
+  bar.style.display = 'flex';
+  if (n === 1) {
+    agree.textContent = '✓ Proceed'; agree.disabled = !state.j3.perms; dis.style.display = 'none';
+  } else if (n === 5) {
+    agree.textContent = '▶ Submit Consent'; agree.disabled = !(state.j3.liveness); dis.style.display = 'flex';
+    dis.textContent = '✗ Disagree';
+  } else if (n === 6) {
+    agree.textContent = '✓ Complete Verification'; agree.disabled = !state.j3.consent; dis.style.display = 'none';
+  } else {
+    agree.textContent = '✓ Agree & Continue'; agree.disabled = false; dis.style.display = 'flex';
+  }
+}
+
+function j3Agree() {
+  if (state.j3.page < 4) j3SetPage(state.j3.page + 1);
+  else if (state.j3.page === 4) j3SetPage(5);
+  else if (state.j3.page === 5) j3SubmitVideo();
+  else if (state.j3.page === 6) {
+    document.getElementById('j3ActionBar').style.display = 'none';
+    showJPage(3, state.j3.voicePending ? 'j3successPending' : 'j3success');
+  }
+}
+
+function j3SubmitVideo() {
+  // Show voice match result from admin sim
+  document.getElementById('j3voiceMatchWrap').style.display = 'block';
+  if (state.j3.voiceResult === true) {
+    document.getElementById('j3voicePass').classList.add('show');
+    setTimeout(() => {
+      state.j3.voicePending = false;
+      document.getElementById('j3voiceConsentRow').innerHTML = '✅ Voice &amp; Video Consent — <strong>Captured</strong>';
+      j3SetPage(6);
+    }, 1500);
+  } else if (state.j3.voiceResult === false) {
+    document.getElementById('j3voiceFail').classList.add('show');
+    document.getElementById('j3voiceFailActions').style.display = 'flex';
+  } else {
+    // Not yet simulated — pending
+    state.j3.voicePending = true;
+    document.getElementById('j3voiceConsentRow').innerHTML = '⏳ Voice &amp; Video Consent — <strong>Pending Verification</strong>';
+    j3SetPage(6);
+  }
+}
+
+function j3ReRecord() {
+  document.getElementById('j3voiceMatchWrap').style.display = 'none';
+  document.getElementById('j3voicePass').classList.remove('show');
+  document.getElementById('j3voiceFail').classList.remove('show');
+  document.getElementById('j3voiceFailActions').style.display = 'none';
+  document.getElementById('j3AgreeBtn').disabled = !(state.j3.liveness);
+}
+
+function j3ProceedPending() {
+  state.j3.voicePending = true;
+  document.getElementById('j3voiceConsentRow').innerHTML = '⏳ Voice &amp; Video Consent — <strong>Pending Verification</strong>';
+  j3SetPage(6);
+}
+
+function j3StartTeleprompter(fromReplay) {
+  document.getElementById('j3teleprompterCard').style.display = 'block';
+  document.getElementById('j3recBadge').classList.add('show');
+  document.getElementById('j3videoStatus').textContent = '● Recording...';
+  document.getElementById('j3playingBadge').textContent = '🔊 Playing...';
+  // Reset voice match area on replay
+  if (fromReplay) {
+    document.getElementById('j3voiceMatchWrap').style.display = 'none';
+    document.getElementById('j3voicePass').classList.remove('show');
+    document.getElementById('j3voiceFail').classList.remove('show');
+    document.getElementById('j3voiceFailActions').style.display = 'none';
+    document.getElementById('j3AgreeBtn').disabled = true;
+  }
+  // Exit scroll mode and reset scroll position
+  const wrap = document.getElementById('j3teleWrap');
+  const inner = document.getElementById('j3teleInner');
+  wrap.classList.remove('scroll-mode');
+  inner.scrollTop = 0;
+  const scrollBtn = document.getElementById('j3scrollBtn');
+  if (scrollBtn) scrollBtn.classList.remove('active');
+  // Reset teleprompter position
+  const textEl = document.getElementById('j3teleText');
+  textEl.style.transform = 'translateY(0)';
+  j3teleOffset = 0;
+  if (j3teleTimer) clearInterval(j3teleTimer);
+  j3teleTimer = setInterval(() => {
+    j3teleOffset += 1;
+    textEl.style.transform = 'translateY(-' + j3teleOffset + 'px)';
+    if (j3teleOffset > 340) {
+      clearInterval(j3teleTimer);
+      document.getElementById('j3playingBadge').textContent = '✅ Voiceover complete';
+    }
+  }, 55);
+  // Enable submit after voiceover runs a bit
+  setTimeout(() => {
+    document.getElementById('j3AgreeBtn').disabled = false;
+  }, 3500);
+}
+
+function j3ReplayScript() {
+  // Reset recording state and restart
+  document.getElementById('j3recBadge').classList.remove('show');
+  document.getElementById('j3videoStatus').textContent = 'Re-recording...';
+  j3StartTeleprompter(true);
+}
+
+function j3ToggleScroll() {
+  const wrap = document.getElementById('j3teleWrap');
+  const inner = document.getElementById('j3teleInner');
+  const btn = document.getElementById('j3scrollBtn');
+  const textEl = document.getElementById('j3teleText');
+  const isScrollMode = wrap.classList.contains('scroll-mode');
+  if (isScrollMode) {
+    // Back to auto-scroll — pause where we are
+    wrap.classList.remove('scroll-mode');
+    btn.classList.remove('active');
+    btn.textContent = '↕ Manual Scroll';
+  } else {
+    // Enter manual scroll — pause auto-scroll, allow free scrolling
+    if (j3teleTimer) clearInterval(j3teleTimer);
+    textEl.style.transform = 'translateY(0)';
+    wrap.classList.add('scroll-mode');
+    btn.classList.add('active');
+    btn.textContent = '▶ Resume Auto-scroll';
+    // Sync inner scroll to where teleprompter was
+    inner.scrollTop = j3teleOffset;
+  }
+}
+
+function j3ToggleConsent() {
+  state.j3.consent = !state.j3.consent;
+  const box = document.getElementById('j3consentBox');
+  const tick = document.getElementById('j3consentTick');
+  box.classList.toggle('checked', state.j3.consent);
+  tick.style.display = state.j3.consent ? 'block' : 'none';
+  document.getElementById('j3AgreeBtn').disabled = !state.j3.consent;
+}
+function j3Restart() { state.j3.consent=false; state.j3.liveness=null; state.j3.voiceResult=null; j3SetPage(1); }
+
+/* ═══════════════════════════════════════
+   JOURNEY 4 — AI Avatar (Voice)
+═══════════════════════════════════════ */
+const j4AvatarScripts = {
+  2: 'I will now verify your personal details. Please listen carefully and respond verbally to each question.',
+  3: 'Let us now confirm your product details. Please respond verbally to confirm the information shown.',
+  4: 'Finally, I will read the key disclaimers. Please confirm verbally that you understand and agree.'
+};
+
+let j4micActive = {};
+
+function j4InitPage(n) {
+  if (n < 2 || n > 4) return;
+  const ring = document.getElementById('j4ring' + n);
+  const wave = document.getElementById('j4wave' + n);
+  const statusEl = document.getElementById('j4avatarStatus' + n);
+  // Avatar speaking animation sequence
+  if (ring) ring.classList.add('show');
+  if (wave) wave.classList.remove('idle');
+  if (statusEl) statusEl.textContent = 'Avatar is speaking...';
+  setTimeout(() => {
+    if (statusEl) statusEl.textContent = j4AvatarScripts[n];
+  }, 600);
+  setTimeout(() => {
+    if (ring) ring.classList.remove('show');
+    if (wave) wave.classList.add('idle');
+    if (statusEl) statusEl.textContent = '🎙 Listening for your response...';
+    // Auto-activate mic visual after avatar finishes
+    const micBtn = document.getElementById('j4mic' + n);
+    const micStatus = document.getElementById('j4micStatus' + n);
+    if (micBtn) micBtn.classList.add('listening');
+    if (micStatus) micStatus.textContent = 'Listening... speak your response';
+    j4micActive[n] = true;
+  }, 3200);
+}
+
+function j4ToggleMic(n) {
+  const micBtn = document.getElementById('j4mic' + n);
+  const micStatus = document.getElementById('j4micStatus' + n);
+  if (!j4micActive[n]) {
+    // Start listening
+    j4micActive[n] = true;
+    micBtn.classList.add('listening');
+    micStatus.textContent = 'Listening... speak your response';
+  } else {
+    // Stop — simulate processing
+    j4micActive[n] = false;
+    micBtn.classList.remove('listening');
+    micStatus.textContent = 'Processing your response...';
+    setTimeout(() => j4ProcessVoice(n), 1400);
+  }
+}
+
+function j4ProcessVoice(n) {
+  const resultEl = document.getElementById('j4result' + n);
+  const micStatus = document.getElementById('j4micStatus' + n);
+  const wave = document.getElementById('j4wave' + n);
+  const ring = document.getElementById('j4ring' + n);
+  const statusEl = document.getElementById('j4avatarStatus' + n);
+  if (adminAvatarPass) {
+    resultEl.className = 'voice-result correct show';
+    resultEl.textContent = '✅ Response verified — you may proceed to the next step.';
+    micStatus.textContent = 'Response accepted ✓';
+    state.j4.answeredPages[n] = true;
+    document.getElementById('j4AgreeBtn').disabled = false;
+    // Avatar acknowledges
+    if (ring) ring.classList.add('show');
+    if (wave) wave.classList.remove('idle');
+    if (statusEl) statusEl.textContent = 'Thank you. Your response has been recorded.';
+    setTimeout(() => {
+      if (ring) ring.classList.remove('show');
+      if (wave) wave.classList.add('idle');
+      if (statusEl) statusEl.textContent = '✅ Verified — tap Agree & Continue';
+    }, 2000);
+  } else {
+    resultEl.className = 'voice-result wrong show';
+    resultEl.textContent = '❌ Response could not be verified. Please tap the mic and try again, or connect to a Verification Officer.';
+    micStatus.textContent = 'Tap mic to try again';
+  }
+}
+
+function j4SetPage(n) {
+  state.j4.page = n;
+  showJPage(4, n <= 5 ? 'j4p'+n : 'j4p5');
+  updateProgress('j4', n, 5);
+  const agree = document.getElementById('j4AgreeBtn');
+  const dis = document.getElementById('j4DisagreeBtn');
+  const bar = document.getElementById('j4ActionBar');
+  bar.style.display = 'flex';
+  if (n === 1) {
+    agree.textContent = '✓ Proceed'; agree.disabled = !state.j4.perms; dis.style.display = 'none';
+  } else if (n === 5) {
+    agree.textContent = '✓ Complete Verification'; agree.disabled = !state.j4.consent; dis.style.display = 'none';
+  } else {
+    agree.textContent = '✓ Agree & Continue';
+    agree.disabled = !state.j4.answeredPages[n];
+    dis.style.display = 'flex';
+    setTimeout(() => j4InitPage(n), 200);
+  }
+}
+
+function j4Agree() {
+  if (state.j4.page < 5) j4SetPage(state.j4.page + 1);
+  else { document.getElementById('j4ActionBar').style.display='none'; showJPage(4,'j4success'); }
+}
+function j4ToggleConsent() {
+  state.j4.consent = !state.j4.consent;
+  const box = document.getElementById('j4consentBox');
+  const tick = document.getElementById('j4consentTick');
+  box.classList.toggle('checked', state.j4.consent);
+  tick.style.display = state.j4.consent ? 'block' : 'none';
+  document.getElementById('j4AgreeBtn').disabled = !state.j4.consent;
+}
+function j4Restart() {
+  state.j4.consent = false; state.j4.perms = false; state.j4.answeredPages = {};
+  j4micActive = {}; adminAvatarPass = false;
+  j4SetPage(1);
+}
+
+/* ═══════════════════════════════════════
+   ADMIN SIMULATION
+═══════════════════════════════════════ */
+let adminAvatarPass = false;
+
+function adminAction(type, value) {
+  if (type === 'reset') { goHome(); return; }
+
+  if (type === 'perm') {
+    // J2
+    ['j2camPerm','j2locPerm'].forEach(id => {
+      const el = document.getElementById(id);
+      el.className = 'perm-status ' + (value ? 'granted' : 'denied');
+      el.textContent = value ? '✓' : '✗';
+    });
+    state.j2.perms = value;
+    if (activeScreen === 'screenJ2' && state.j2.page === 1) document.getElementById('j2AgreeBtn').disabled = !value;
+    // J3
+    ['j3camPerm','j3locPerm'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.className = 'perm-status ' + (value ? 'granted' : 'denied');
+      el.textContent = value ? '✓' : '✗';
+    });
+    state.j3.perms = value;
+    if (activeScreen === 'screenJ3' && state.j3.page === 1) document.getElementById('j3AgreeBtn').disabled = !value;
+    // J4
+    ['j4camPerm','j4locPerm'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.className = 'perm-status ' + (value ? 'granted' : 'denied');
+      el.textContent = value ? '✓' : '✗';
+    });
+    state.j4.perms = value;
+    if (activeScreen === 'screenJ4' && state.j4.page === 1) document.getElementById('j4AgreeBtn').disabled = !value;
+  }
+
+  if (type === 'liveness') {
+    if (activeScreen === 'screenJ2' && state.j2.page === 5) {
+      state.j2.liveness = value;
+      ['j2b1','j2b2','j2b3'].forEach(id => document.getElementById(id).className='blink-dot');
+      runBlinkAnim(['j2b1','j2b2','j2b3'], document.getElementById('j2selfieMsg'),
+        () => {
+          document.getElementById('j2livenessPass').classList.add('show');
+          document.getElementById('j2faceGuide').classList.add('captured');
+          document.getElementById('j2AgreeBtn').disabled = !state.j2.consent;
+        },
+        () => document.getElementById('j2livenessFail').classList.add('show'),
+        value
+      );
+    }
+    if (activeScreen === 'screenJ3' && state.j3.page === 5) {
+      state.j3.liveness = value;
+      const statusEl = document.getElementById('j3videoStatus');
+      const failEl = document.getElementById('j3livenessFail');
+      const tickEl = document.getElementById('j3livenessTick');
+      failEl.classList.remove('show');
+      if (tickEl) tickEl.style.display = 'none';
+      statusEl.textContent = 'Detecting liveness...';
+      if (value) {
+        setTimeout(() => {
+          // Show compact tick inside info-note
+          if (tickEl) { tickEl.style.display = 'flex'; }
+          // Update instruction text
+          const instrEl = document.getElementById('j3livenessInstruction');
+          if (instrEl) instrEl.innerHTML = 'Liveness confirmed. <strong>Voiceover is starting...</strong>';
+          statusEl.textContent = '✓ Liveness confirmed';
+          document.getElementById('j3AgreeBtn').disabled = false;
+          j3StartTeleprompter(false);
+        }, 1200);
+      } else {
+        failEl.classList.add('show');
+        statusEl.textContent = '✗ Liveness failed';
+      }
+    }
+  }
+
+  if (type === 'voice') {
+    state.j3.voiceResult = value;
+  }
+
+  if (type === 'avatar') {
+    adminAvatarPass = value;
+    if (activeScreen === 'screenJ4') {
+      const curPage = state.j4.page;
+      if (curPage >= 2 && curPage <= 4) {
+        // Simulate mic stop → process voice with admin outcome
+        const micBtn = document.getElementById('j4mic' + curPage);
+        const micStatus = document.getElementById('j4micStatus' + curPage);
+        if (micBtn) micBtn.classList.remove('listening');
+        if (micStatus) micStatus.textContent = 'Processing your response...';
+        j4micActive[curPage] = false;
+        setTimeout(() => j4ProcessVoice(curPage), 800);
+      }
+    }
+  }
+}
+
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
+j1SetPage(1);
+</script>
+</body>
+</html>
